@@ -4,12 +4,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define LOG "clients.dan"
+
 typedef enum {
     OFF      = 0b0000,
     RED      = 0b0001,
     YELLOW   = 0b0010,
     GREEN    = 0b0100,
-    CHECKING = 0b0111
+    ALL      = 0b0111
 } States_t;
 
 typedef unsigned char state_t;

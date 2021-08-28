@@ -17,8 +17,8 @@ void print_client_state(id_t id, pid_t pid, state_t state) {
             case GREEN:
                 sprintf(buf, "GREEN");
                 break;
-            case CHECKING:
-                sprintf(buf, "CHECKING");
+            case ALL:
+                sprintf(buf, "ALL");
                 break;
             default:
                 fprintf(stderr, "State error: invalid client state\n");
@@ -57,7 +57,7 @@ void print_client_state(id_t id, pid_t pid, state_t state) {
 unsigned int number_of_states(state_t state) {
     if (state == OFF)
         return 1;
-    if (state == CHECKING)
+    if (state == ALL)
         return 1;
     unsigned int res = 0;
     for (char i = 0; i < 3; i++)

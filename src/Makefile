@@ -9,8 +9,8 @@ all: start server client
 start:
 	@ echo "Start building"
 
-server: $(BUILD)/server.o $(BUILD)/network.o network.h
-	$(CC) -g $(BUILD)/server.o $(BUILD)/network.o -o $(BIN)/server
+server: $(BUILD)/server.o $(BUILD)/network.o $(BUILD)/conditions.o network.h conditions.h
+	$(CC) -g $(BUILD)/server.o $(BUILD)/network.o $(BUILD)/conditions.o -o $(BIN)/server
 
 $(BUILD)/server.o: server.c network.h
 	$(CC) $(FLAGS) server.c -o $(BUILD)/server.o

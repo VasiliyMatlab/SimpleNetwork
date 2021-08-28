@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
     state = YELLOW | RED;
     print_client_state(id, pid, state);
     sleep(2);
-    state = CHECKING;
+    state = ALL;
     print_client_state(id, pid, state);
 
     sleep(2);
