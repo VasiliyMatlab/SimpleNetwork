@@ -3,7 +3,7 @@ BUILD = ../build
 CC = gcc
 FLAGS = -c -Wall
 
-all: start server
+all: start server client
 	@ echo "Building is complete"
 
 start:
@@ -14,6 +14,12 @@ server: $(BUILD)/server.o
 
 $(BUILD)/server.o: server.c
 	$(CC) $(FLAGS) server.c -o $(BUILD)/server.o
+
+client: $(BUILD)/client.o
+	$(CC) -g $(BUILD)/client.o -o $(BIN)/client
+
+$(BUILD)/client.o: client.c
+	$(CC) $(FLAGS) client.c -o $(BUILD)/client.o
 
 clean:
 	rm $(BUILD)/*
