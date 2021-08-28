@@ -23,6 +23,12 @@ int main(int argc, char *argv[]) {
     
     state_t state = OFF;
     print_client_state(id, pid, state);
+    sleep(2);
+    state = YELLOW | RED;
+    print_client_state(id, pid, state);
+    sleep(2);
+    state = CHECKING;
+    print_client_state(id, pid, state);
 
     sleep(2);
     printf("[%d] Client #%d is shutdown\n", pid, id);
