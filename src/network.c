@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include "network.h"
 
+// Переопределение системного вызова socket(2)
 int Socket(int domain, int type, int protocol) {
     int out = socket(domain, type, protocol);
     if (out == -1) {
@@ -15,6 +16,7 @@ int Socket(int domain, int type, int protocol) {
     return out;
 }
 
+// Переопределение системного вызова bind(2)
 void Bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
     int opt = 1;
     setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
@@ -25,6 +27,7 @@ void Bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
     }
 }
 
+// Переопределение системного вызова listen(2)
 void Listen(int sockfd, int backlog) {
     int status = listen(sockfd, backlog);
     if (status == -1) {
@@ -33,6 +36,7 @@ void Listen(int sockfd, int backlog) {
     }
 }
 
+// Переопределение системного вызова accept(2)
 int Accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
     int out;
     out = accept(sockfd, addr, addrlen);
@@ -43,6 +47,7 @@ int Accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
     return out;
 }
 
+// Переопределение системного вызова connect(2)
 void Connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
     int status;
     status = connect(sockfd, addr, addrlen);
@@ -52,6 +57,7 @@ void Connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
     }
 }
 
+// Переопределение системного вызова inet_ntop(3)
 void Inet_ntop(int af, const void *src, char *dst, socklen_t size) {
     inet_ntop(af, src, dst, size);
     if (dst == NULL) {
@@ -60,6 +66,7 @@ void Inet_ntop(int af, const void *src, char *dst, socklen_t size) {
     }
 }
 
+// Переопределение системного вызова inet_pton(3)
 void Inet_pton(int af, const char *src, void *dst) {
     int status = inet_pton(af, src, dst);
     if (status == -1) {

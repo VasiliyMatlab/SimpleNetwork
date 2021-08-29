@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "conditions.h"
 
+// Вывод на экран состояния клиента
 void print_client_state(id_t id, pid_t pid, state_t state) {
     unsigned int vol = number_of_states(state);
     char buf[16];
@@ -56,6 +57,7 @@ void print_client_state(id_t id, pid_t pid, state_t state) {
     }
 }
 
+// Вычисление количества состояний клиента
 unsigned int number_of_states(state_t state) {
     if (state == OFF)
         return 1;
