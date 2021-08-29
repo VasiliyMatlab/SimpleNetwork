@@ -1,3 +1,8 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include "internal.h"
 #include "network.h"
 #include "conditions.h"
 
@@ -6,11 +11,12 @@ int main() {
     printf("[%d] Server is launched\n", pid);
     sleep(2);
 
-    int logfile = open(LOG, O_RDWR | O_CREAT, 0644);
+    //int logfile = open(LOG, O_RDWR | O_CREAT, 0644);
+    int logfile = Creat(LOG, 0644);
 
-    sleep(2);
-    close(logfile);
-    remove(LOG);
+    sleep(20);
+    Close(logfile);
+    Remove(LOG);
     printf("[%d] Server is shutdown\n", pid);
     exit(EXIT_SUCCESS);
 }

@@ -1,3 +1,9 @@
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "network.h"
 
 int Socket(int domain, int type, int protocol) {
@@ -66,15 +72,4 @@ void Inet_pton(int af, const char *src, void *dst) {
             " address family\n");
         exit(EXIT_FAILURE);
     }
-}
-
-ssize_t Read(int fd, void *buf, size_t count) {
-    ssize_t bytes = read(fd, buf, count);
-    if (bytes == -1) {
-        perror("read failed");
-        exit(EXIT_FAILURE);
-    }
-    if (bytes == 0)
-        printf("EOF occured");
-    return bytes;
 }

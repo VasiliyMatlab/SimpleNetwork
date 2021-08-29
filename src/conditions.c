@@ -1,3 +1,5 @@
+#include <stdlib.h>
+#include <stdio.h>
 #include "conditions.h"
 
 void print_client_state(id_t id, pid_t pid, state_t state) {

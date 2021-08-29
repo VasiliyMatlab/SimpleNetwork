@@ -1,9 +1,6 @@
 #ifndef CONDITIONS_H
 #define CONDITIONS_H
 
-#include <stdlib.h>
-#include <stdio.h>
-
 #define LOG "clients.dan"
 
 typedef enum {
