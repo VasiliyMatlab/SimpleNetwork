@@ -5,6 +5,8 @@
 int Creat(const char *pathname, mode_t mode);
 // Переопределение системного вызова close(2)
 void Close(int fd);
+// Переопределение системного вызова open(2)
+int Open(const char *pathname, int flags);
 // Переопределение системного вызова read(2)
 ssize_t Read(int fd, void *buf, size_t count);
 // Переопределение системного вызова remove(3)

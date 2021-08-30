@@ -23,6 +23,17 @@ void Close(int fd) {
     }
 }
 
+// Переопределение системного вызова open(2)
+int Open(const char *pathname, int flags) {
+    int fd = open(pathname, flags);
+    if (fd == -1) {
+        fprintf(stderr, "Server is not running\n");
+        perror("open failed");
+        exit(EXIT_FAILURE);
+    }
+    return fd;
+}
+
 // Переопределение системного вызова read(2)
 ssize_t Read(int fd, void *buf, size_t count) {
     ssize_t bytes = read(fd, buf, count);

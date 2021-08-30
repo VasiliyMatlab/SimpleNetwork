@@ -1,6 +1,8 @@
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "internal.h"
 #include "network.h"
 #include "conditions.h"
 
@@ -25,6 +27,9 @@ int main(int argc, char *argv[]) {
     pid_t pid = getpid();
     printf("[%d] Client #%d is launched\n", pid, id);
     sleep(2);
+
+    // Открытие лог-файла
+    int logfile = Open(LOG, O_RDWR);
     
     // Инициализация и изменение состояний клиента
     state_t state = OFF;
@@ -38,6 +43,7 @@ int main(int argc, char *argv[]) {
 
     // Выключение клиента
     sleep(2);
+    Close(logfile);
     printf("[%d] Client #%d is shutdown\n", pid, id);
     exit(EXIT_SUCCESS);
 }
