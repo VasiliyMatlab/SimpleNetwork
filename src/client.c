@@ -1,12 +1,21 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <unistd.h>
 #include "internal.h"
 #include "network.h"
 #include "conditions.h"
 
+void signal_handler(int signalno);
+
+pid_t pid;
+id_t id;
+int logfile;
+
 int main(int argc, char *argv[]) {
+    signal(SIGINT, signal_handler);
+    
     // Обработка аргументов командной строки
     if (argc == 1) {
         fprintf(stderr, "Arguments error: not ehough arguments\n");
@@ -16,7 +25,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Arguments error: too many arguments\n");
         exit(EXIT_FAILURE);
     }
-    id_t id = atoi(argv[1]);
+    id = atoi(argv[1]);
     if ((id == 0) || (id > BACKLOG)) {
         fprintf(stderr, "ID error: invalid number\n"
             "ID must be in [1..%d]\n", BACKLOG);
@@ -24,12 +33,12 @@ int main(int argc, char *argv[]) {
     }
 
     // Запуск клиента
-    pid_t pid = getpid();
+    pid = getpid();
     printf("[%d] Client #%d is launched\n", pid, id);
     sleep(2);
 
     // Открытие лог-файла
-    int logfile = Open(LOG, O_RDWR);
+    logfile = Open(LOG, O_RDWR);
     
     // Инициализация и изменение состояний клиента
     state_t state = OFF;
@@ -46,4 +55,12 @@ int main(int argc, char *argv[]) {
     Close(logfile);
     printf("[%d] Client #%d is shutdown\n", pid, id);
     exit(EXIT_SUCCESS);
+}
+
+void signal_handler(int signalno) {
+    if (signalno == SIGINT) {
+        Close(logfile);
+        printf("\n[%d] Client #%d is shutdown\n", pid, id);
+        exit(EXIT_SUCCESS);
+    }
 }
