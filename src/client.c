@@ -14,7 +14,14 @@ id_t id;
 int logfile;
 
 int main(int argc, char *argv[]) {
-    signal(SIGINT, signal_handler);
+    // Задаем обработчик сигналов
+    void (*status)(int);
+    status = signal(SIGINT, signal_handler);
+    status = signal(SIGTERM, signal_handler);
+    if (status == SIG_ERR) {
+        perror("signal handler failed");
+        exit(EXIT_FAILURE);
+    }
     
     // Обработка аргументов командной строки
     if (argc == 1) {
@@ -58,9 +65,7 @@ int main(int argc, char *argv[]) {
 }
 
 void signal_handler(int signalno) {
-    if (signalno == SIGINT) {
         Close(logfile);
         printf("\n[%d] Client #%d is shutdown\n", pid, id);
         exit(EXIT_SUCCESS);
-    }
 }

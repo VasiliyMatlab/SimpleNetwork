@@ -13,7 +13,14 @@ pid_t pid;
 int logfile;
 
 int main() {
-    signal(SIGINT, signal_handler);
+    // Задаем обработчик сигналов
+    void (*status)(int);
+    status = signal(SIGINT, signal_handler);
+    status = signal(SIGTERM, signal_handler);
+    if (status == SIG_ERR) {
+        perror("signal handler failed");
+        exit(EXIT_FAILURE);
+    }
 
     // Запуск сервера
     pid = getpid();
@@ -32,10 +39,8 @@ int main() {
 }
 
 void signal_handler(int signalno) {
-    if (signalno == SIGINT) {
         Close(logfile);
         Remove(LOG);
         printf("\n[%d] Server is shutdown\n", pid);
         exit(EXIT_SUCCESS);
-    }
 }
