@@ -11,6 +11,7 @@ void signal_handler(int signalno);
 
 pid_t pid;
 int logfile;
+char buffer[BUFSIZ];
 
 int main() {
     // Задаем обработчик сигналов

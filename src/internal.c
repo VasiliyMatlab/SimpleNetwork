@@ -42,7 +42,7 @@ ssize_t Read(int fd, void *buf, size_t count) {
         exit(EXIT_FAILURE);
     }
     if (bytes == 0)
-        printf("EOF occured");
+        printf("EOF occured\n");
     return bytes;
 }
 
@@ -53,4 +53,16 @@ void Remove(const char *pathname) {
         perror("remove failed");
         exit(EXIT_FAILURE);
     }
+}
+
+// Переопределение системного вызова write(2)
+ssize_t Write(int fd, const void *buf, size_t count) {
+    ssize_t bytes = write(fd, buf, count);
+    if (bytes == -1) {
+        perror("write error");
+        exit(EXIT_FAILURE);
+    }
+    if (bytes == 0)
+        printf("No writing\n");
+    return bytes;
 }

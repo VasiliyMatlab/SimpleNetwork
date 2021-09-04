@@ -12,6 +12,7 @@ void signal_handler(int signalno);
 pid_t pid;
 id_t id;
 int logfile;
+char buffer[BUFSIZ];
 
 int main(int argc, char *argv[]) {
     // Задаем обработчик сигналов
@@ -44,7 +45,7 @@ int main(int argc, char *argv[]) {
     printf("[%d] Client #%d is launched\n", pid, id);
     sleep(2);
 
-    // Открытие лог-файла
+    // Открытие лог-файла и запись клиента
     logfile = Open(LOG, O_RDWR);
     
     // Инициализация и изменение состояний клиента

@@ -11,5 +11,7 @@ int Open(const char *pathname, int flags);
 ssize_t Read(int fd, void *buf, size_t count);
 // Переопределение системного вызова remove(3)
 void Remove(const char *pathname);
+// Переопределение системного вызова write(2)
+ssize_t Write(int fd, const void *buf, size_t count);
 
 #endif
