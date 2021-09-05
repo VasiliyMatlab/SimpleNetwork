@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
-#include <string.h>
 #include <unistd.h>
 #include "internal.h"
 #include "network.h"
+#include "logfile.h"
 #include "conditions.h"
 
 void signal_handler(int signalno);
@@ -43,11 +43,6 @@ int main(int argc, char *argv[]) {
     }
 
     // Открытие лог-файла и запись в него клиента
-    logfile = Open(LOG, O_RDWR);
-    memset(buffer, 0, BUFSIZ);
-    bytes = Read(logfile, buffer, BUFSIZ-1);
-    sprintf(buffer, "Client %d\n", id);
-    bytes = Write(logfile, buffer, strlen(buffer));
 
     // Запуск клиента
     pid = getpid();
@@ -65,16 +60,12 @@ int main(int argc, char *argv[]) {
     print_client_state(id, pid, state);
 
     // Выключение клиента
-    //sleep(2);
-    getchar();
-    remove_client_from_log(logfile, id);
-    Close(logfile);
+    sleep(2);
     printf("[%d] Client #%d is shutdown\n", pid, id);
     exit(EXIT_SUCCESS);
 }
 
 void signal_handler(int signalno) {
-        Close(logfile);
         printf("\n[%d] Client #%d is shutdown\n", pid, id);
         exit(EXIT_SUCCESS);
 }

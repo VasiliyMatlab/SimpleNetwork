@@ -5,7 +5,7 @@
 #include <fcntl.h>
 #include "internal.h"
 #include "network.h"
-#include "conditions.h"
+#include "logfile.h"
 
 void signal_handler(int signalno);
 
@@ -29,19 +29,14 @@ int main() {
     //sleep(2);
 
     // Создание лог-файла
-    logfile = Creat(LOG, 0644);
 
     // Выключение сервера
     sleep(2000000);
-    Close(logfile);
-    Remove(LOG);
     printf("[%d] Server is shutdown\n", pid);
     exit(EXIT_SUCCESS);
 }
 
 void signal_handler(int signalno) {
-        Close(logfile);
-        Remove(LOG);
         printf("\n[%d] Server is shutdown\n", pid);
         exit(EXIT_SUCCESS);
 }
