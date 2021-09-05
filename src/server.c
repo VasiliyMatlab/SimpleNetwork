@@ -26,13 +26,13 @@ int main() {
     // Запуск сервера
     pid = getpid();
     printf("[%d] Server is launched\n", pid);
-    sleep(2);
+    //sleep(2);
 
     // Создание лог-файла
     logfile = Creat(LOG, 0644);
 
     // Выключение сервера
-    sleep(20);
+    sleep(2000000);
     Close(logfile);
     Remove(LOG);
     printf("[%d] Server is shutdown\n", pid);

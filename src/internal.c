@@ -62,7 +62,5 @@ ssize_t Write(int fd, const void *buf, size_t count) {
         perror("write error");
         exit(EXIT_FAILURE);
     }
-    if (bytes == 0)
-        printf("No writing\n");
     return bytes;
 }
