@@ -66,6 +66,6 @@ int main(int argc, char *argv[]) {
 }
 
 void signal_handler(int signalno) {
-        printf("\n[%d] Client #%d is shutdown\n", pid, id);
-        exit(EXIT_SUCCESS);
+    printf("\n[%d] Client #%d is shutdown\n", pid, id);
+    exit(EXIT_SUCCESS);
 }
