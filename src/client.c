@@ -1,6 +1,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <signal.h>
 #include <unistd.h>
 #include "internal.h"
@@ -13,8 +14,7 @@ void signal_handler(int signalno);
 pid_t pid;
 id_t id;
 int logfile;
-ssize_t bytes;
-char buffer[BUFSIZ];
+bool *clients;
 
 int main(int argc, char *argv[]) {
     // Задаем обработчик сигналов
@@ -43,6 +43,14 @@ int main(int argc, char *argv[]) {
     }
 
     // Открытие лог-файла и запись в него клиента
+    key_t logkey = Ftok(LOG, 0);
+    logfile = Shmget(logkey, BACKLOG*sizeof(bool), 0666);
+    clients = (bool *) Shmat(logfile, NULL, 0);
+    if (clients[id-1] == true) {
+        fprintf(stderr, "Client error: client with id = %d is already in use\n", id);
+        exit(EXIT_FAILURE);
+    }
+    clients[id-1] = true;
 
     // Запуск клиента
     pid = getpid();
@@ -61,11 +69,15 @@ int main(int argc, char *argv[]) {
 
     // Выключение клиента
     sleep(2);
+    clients[id-1] = false;
+    Shmdt(clients);
     printf("[%d] Client #%d is shutdown\n", pid, id);
     exit(EXIT_SUCCESS);
 }
 
 void signal_handler(int signalno) {
+    clients[id-1] = false;
+    Shmdt(clients);
     printf("\n[%d] Client #%d is shutdown\n", pid, id);
     exit(EXIT_SUCCESS);
 }
