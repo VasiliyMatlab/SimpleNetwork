@@ -7,6 +7,10 @@
 #include "internal.h"
 #include "network.h"
 
+#define STACK_SIZE 10000
+char child_stack[STACK_SIZE+1];
+
+// Обработчик сигналов
 void signal_handler(int signalno);
 
 pid_t pid;

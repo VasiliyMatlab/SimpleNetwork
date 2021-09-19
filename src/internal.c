@@ -1,4 +1,5 @@
 #include <fcntl.h>
+#include <sched.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -63,4 +64,14 @@ ssize_t Write(int fd, const void *buf, size_t count) {
         exit(EXIT_FAILURE);
     }
     return bytes;
+}
+
+// Переопределение системного вызова clone(2)
+pid_t Clone(int (*fn)(void *), void *stack, int flags, void *arg) {
+    pid_t pid = clone(fn, stack, flags, arg);
+    if (pid == -1) {
+        perror("clone failed");
+        exit(EXIT_FAILURE);
+    }
+    return pid;
 }

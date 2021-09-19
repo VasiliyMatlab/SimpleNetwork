@@ -8,6 +8,7 @@
 #include "network.h"
 #include "conditions.h"
 
+// Обработчик сигналов
 void signal_handler(int signalno);
 
 pid_t pid;
