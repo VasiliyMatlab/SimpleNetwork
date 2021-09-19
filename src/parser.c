@@ -20,6 +20,7 @@ cmd_in parser_in(char *str) {
             out = IN_SHUTDOWN;
             break;
         }
+        tmp = strtok(NULL, " ");
     }
     free(tmp);
     if (out == IN_NONE) {
@@ -35,17 +36,43 @@ cmd_out parser_out(char *str) {
     char *tmp = strtok(str, " ");
     if (!strcmp(tmp, "Deny"))
         out = OUT_DENY;
-    if (!strcmp(tmp, "Client"))
+    else if (!strcmp(tmp, "Client"))
         out = OUT_CONN;
-    if (!strcmp(tmp, "Get"))
+    else if (!strcmp(tmp, "Get"))
         out = OUT_GETSTATE;
-    if (!strcmp(tmp, "Set"))
+    else if (!strcmp(tmp, "Set"))
         out = OUT_SETSTATE;
-    if (!strcmp(tmp, "Shutdown"))
+    else if (!strcmp(tmp, "Shutdown"))
         out = OUT_SHUTDOWN;
+    free(tmp);
     if (out == OUT_NONE) {
         fprintf(stderr, "Parser error: unknown message type\n");
         exit(EXIT_FAILURE);
     }
+    return out;
+}
+
+// Парсер принимаемых команд от пользователя
+cmd_terminal parser_terminal(char *str) {
+    cmd_terminal out = TERM_NONE;
+    char *tmp = strtok(str, " ");
+    if (!strcmp(tmp, "Is"))
+        out = TERM_LAUNCH;
+    else if (!strcmp(tmp, "Get"))
+        out = TERM_GETSTATE;
+    else if (!strcmp(tmp, "Set"))
+        out = TERM_SETSTATE;
+    else {
+        tmp = strtok(NULL, " ");
+        if (!strcmp(tmp, "client"))
+            out = TERM_SHDWN_CLNT;
+        else if (!strcmp(tmp, "server"))
+            out = TERM_SHDWN_SERV;
+        else {
+            fprintf(stderr, "Parser error: unknown command type\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+    free(tmp);
     return out;
 }
