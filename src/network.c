@@ -1,9 +1,3 @@
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include "network.h"
 
 // Переопределение системного вызова socket(2)
@@ -79,4 +73,28 @@ void Inet_pton(int af, const char *src, void *dst) {
             " address family\n");
         exit(EXIT_FAILURE);
     }
+}
+
+// Переопределение системного вызова recvfrom(2)
+ssize_t Recvfrom(int sockfd, void *buf, size_t len, int flags,
+                 struct sockaddr *src_addr, socklen_t *addrlen) {
+    ssize_t bytes;
+    bytes = recvfrom(sockfd, buf, len, flags, src_addr, addrlen);
+    if (bytes == -1) {
+        perror("recvfrom failed");
+        exit(EXIT_FAILURE);
+    }
+    return bytes;
+}
+
+// Переопределение системного вызова sendto(2)
+ssize_t Sendto(int sockfd, const void *buf, size_t len, int flags,
+                const struct sockaddr *dest_addr, socklen_t addrlen) {
+    ssize_t bytes;
+    bytes = sendto(sockfd, buf, len, flags, dest_addr, addrlen);
+    if (bytes == -1) {
+        perror("sendto failed");
+        exit(EXIT_FAILURE);
+    }
+    return bytes;
 }
