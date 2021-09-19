@@ -11,21 +11,18 @@ start:
 	@ echo "Start building"
 
 
-server: $(BUILD)/server.o $(BUILD)/network.o $(BUILD)/conditions.o $(BUILD)/internal.o network.h $(BUILD)/logfile.o conditions.h internal.h
-	$(CC) -g $(BUILD)/server.o $(BUILD)/network.o $(BUILD)/conditions.o $(BUILD)/internal.o $(BUILD)/logfile.o -o $(BIN)/server
+server: $(BUILD)/server.o $(BUILD)/network.o $(BUILD)/conditions.o $(BUILD)/internal.o network.h conditions.h internal.h
+	$(CC) -g $(BUILD)/server.o $(BUILD)/network.o $(BUILD)/conditions.o $(BUILD)/internal.o -o $(BIN)/server
 
-$(BUILD)/server.o: server.c network.h conditions.h internal.h logfile.h
+$(BUILD)/server.o: server.c network.h conditions.h internal.h
 	$(CC) $(FLAGS) server.c -o $(BUILD)/server.o
 
-client: $(BUILD)/client.o $(BUILD)/network.o $(BUILD)/conditions.o $(BUILD)/internal.o $(BUILD)/logfile.o network.h conditions.h internal.h
-	$(CC) -g $(BUILD)/client.o $(BUILD)/network.o $(BUILD)/conditions.o $(BUILD)/internal.o $(BUILD)/logfile.o -o $(BIN)/client
+client: $(BUILD)/client.o $(BUILD)/network.o $(BUILD)/conditions.o $(BUILD)/internal.o network.h conditions.h internal.h
+	$(CC) -g $(BUILD)/client.o $(BUILD)/network.o $(BUILD)/conditions.o $(BUILD)/internal.o -o $(BIN)/client
 
-$(BUILD)/client.o: client.c network.h conditions.h internal.h logfile.h
+$(BUILD)/client.o: client.c network.h conditions.h internal.h
 	$(CC) $(FLAGS) client.c -o $(BUILD)/client.o
 
-
-$(BUILD)/logfile.o: logfile.c logfile.h internal.h
-	$(CC) $(FLAGS) logfile.c -o $(BUILD)/logfile.o
 
 $(BUILD)/conditions.o: conditions.c conditions.h internal.h
 	$(CC) $(FLAGS) conditions.c -o $(BUILD)/conditions.o

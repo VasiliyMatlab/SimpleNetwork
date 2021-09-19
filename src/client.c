@@ -1,4 +1,3 @@
-#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,16 +6,13 @@
 #include <unistd.h>
 #include "internal.h"
 #include "network.h"
-#include "logfile.h"
 #include "conditions.h"
 
 void signal_handler(int signalno);
 
 pid_t pid;
 id_t id;
-int logfile;
-bool *clients;
-int client;
+int client_sock;
 ssize_t bytes;
 
 int main(int argc, char *argv[]) {
@@ -45,24 +41,13 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    // Открытие лог-файла и запись в него клиента
-    key_t logkey = Ftok(LOG, 0);
-    logfile = Shmget(logkey, BACKLOG*sizeof(bool), 0666);
-    clients = (bool *) Shmat(logfile, NULL, 0);
-    if (clients[id-1] == true) {
-        fprintf(stderr, "Client error: client with "
-            "id = %d is already in use\n", id);
-        exit(EXIT_FAILURE);
-    }
-    clients[id-1] = true;
-
     // Запуск клиента
     pid = getpid();
     printf("[%d] Client #%d is launched\n", pid, id);
     sleep(2);
     
     // Создание сокета
-    client = Socket(AF_INET, SOCK_DGRAM, 0);
+    client_sock = Socket(AF_INET, SOCK_DGRAM, 0);
     struct sockaddr_in servaddr = {0};
     // Заполнение информации о сервере
     servaddr.sin_family = AF_INET;
@@ -72,21 +57,29 @@ int main(int argc, char *argv[]) {
 
     // Посылаем информацию о клиенте на сервер
     char buffer[BUFSIZ];
-    sprintf(buffer, "Client #%d is on\n", id);
-    Sendto(client, buffer, strlen(buffer), MSG_CONFIRM, 
+    sprintf(buffer, "Client #%d is on", id);
+    Sendto(client_sock, buffer, strlen(buffer), MSG_CONFIRM, 
            (const struct sockaddr *) &servaddr, servlen);
 
-    // Принимаем подтверждение об успешном подключении
+    // Принимаем ответ сервера
     memset(buffer, 0, BUFSIZ);
-    bytes = Recvfrom(client, buffer, BUFSIZ, MSG_WAITALL, 
+    bytes = Recvfrom(client_sock, buffer, BUFSIZ, MSG_WAITALL, 
                      (struct sockaddr *) &servaddr, &servlen);
-    buffer[bytes] = '\0';
     id_t tmp = -1;
-    sscanf(buffer, "Client #%d is connected to server\n", &tmp);
+    if (!strcmp(buffer, "Deny")) {
+        fprintf(stderr, "Connection error: client with id = %d "
+            "is already exist\n", id);
+        Close(client_sock);
+        exit(EXIT_FAILURE);
+    }
+    sscanf(buffer, "Client #%d is connected to server", &tmp);
     if (tmp == id)
         printf("[%d] Client #%d is connected to server\n", pid, id);
     else {
         fprintf(stderr, "Connection error: wrong received id from server\n");
+        fprintf(stderr, "Connection is terminated\n");
+        Close(client_sock);
+        exit(EXIT_FAILURE);
     }
 
     // Инициализация и изменение состояний клиента
@@ -101,18 +94,14 @@ int main(int argc, char *argv[]) {
 
     // Выключение клиента
     sleep(20);
-    clients[id-1] = false;
-    Shmdt(clients);
-    Close(client);
+    Close(client_sock);
     printf("[%d] Client #%d is shutdown\n", pid, id);
     exit(EXIT_SUCCESS);
 }
 
 // Обработчик сигналов
 void signal_handler(int signalno) {
-    clients[id-1] = false;
-    Shmdt(clients);
-    Close(client);
+    Close(client_sock);
     printf("\n[%d] Client #%d is shutdown\n", pid, id);
     exit(EXIT_SUCCESS);
 }
