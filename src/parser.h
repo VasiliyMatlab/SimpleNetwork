@@ -1,8 +1,6 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include <stdlib.h>
-
 // Команды на прием сообщений от клиента
 typedef enum {
     IN_NONE     = 0x0,  // отсутствие команды
@@ -32,10 +30,10 @@ typedef enum {
 } cmd_terminal;
 
 // Парсер приема сообщений от клиентов
-cmd_in parser_in(char *str, ssize_t len);
+cmd_in parser_in(char *str);
 // Парсер выдачи сообщений клиентам
-cmd_out parser_out(char *str, ssize_t len);
+cmd_out parser_out(char *str);
 // Парсер принимаемых команд от пользователя
-cmd_terminal parser_terminal(char *str, ssize_t len);
+cmd_terminal parser_terminal(char *str);
 
 #endif
