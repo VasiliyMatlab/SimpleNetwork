@@ -12,11 +12,15 @@ char child_stack[STACK_SIZE+1];
 
 // Обработчик сигналов
 void signal_handler(int signalno);
+// Процесс, отвечающий за прием сообщений от клиентов
+int proc_in(void *params);
 
-pid_t pid;
+pid_t pid, pid1, pid2;
 bool *clients;
 int server_sock;
 ssize_t bytes;
+struct sockaddr_in clntaddr = {0};
+socklen_t clntlen = sizeof(clntaddr);
 
 int main() {
     // Задаем обработчик сигналов
@@ -42,8 +46,6 @@ int main() {
     // Создание сокета
     server_sock = Socket(AF_INET, SOCK_DGRAM, 0);
     struct sockaddr_in servaddr = {0};
-    struct sockaddr_in clntaddr = {0};
-    socklen_t clntlen = sizeof(clntaddr);
     // Заполнение информации о сервере
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = INADDR_ANY;
@@ -51,15 +53,9 @@ int main() {
     // Связывание сокета с адресом сервера
     Bind(server_sock, (const struct sockaddr *) &servaddr, sizeof(servaddr));
 
-    // Слушаем сокет
-    char buffer[BUFSIZ];
-    bytes = Recvfrom(server_sock, buffer, BUFSIZ, MSG_WAITALL, 
-                     (struct sockaddr *) &clntaddr, &clntlen);
-    buffer[bytes] = '\0';
-
     // Парсим информацию
     id_t clntnum = -1;
-    sscanf(buffer, "Client #%d is on", &clntnum);
+    sscanf(buffer, "Client #%d is launched", &clntnum);
     memset(buffer, 0, BUFSIZ);
     // Если клиент с таким id уже подключен, то отклоняем подключение
     if (clients[clntnum-1]) {
@@ -90,4 +86,17 @@ void signal_handler(int signalno) {
     Close(server_sock);
     printf("\n[%d] Server is shutdown\n", pid);
     exit(EXIT_SUCCESS);
+}
+
+int proc_in(void *params) {
+    // Слушаем сокет
+    char buffer[BUFSIZ];
+    memset(buffer, 0, BUFSIZ);
+    bytes = Recvfrom(server_sock, buffer, BUFSIZ, MSG_WAITALL, 
+                     (struct sockaddr *) &clntaddr, &clntlen);
+
+    // Парсим информацию
+    
+
+    return 0;
 }

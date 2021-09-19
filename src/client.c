@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
 
     // Посылаем информацию о клиенте на сервер
     char buffer[BUFSIZ];
-    sprintf(buffer, "Client #%d is on", id);
+    sprintf(buffer, "Client #%d is launched", id);
     Sendto(client_sock, buffer, strlen(buffer), MSG_CONFIRM, 
            (const struct sockaddr *) &servaddr, servlen);
 
