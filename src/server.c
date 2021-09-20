@@ -7,13 +7,8 @@
 #include "internal.h"
 #include "network.h"
 
-#define STACK_SIZE 10000
-char child_stack[STACK_SIZE+1];
-
 // Обработчик сигналов
 void signal_handler(int signalno);
-// Процесс, отвечающий за прием сообщений от клиентов
-int proc_in(void *params);
 
 pid_t pid, pid1, pid2;
 bool *clients;
@@ -53,6 +48,12 @@ int main() {
     // Связывание сокета с адресом сервера
     Bind(server_sock, (const struct sockaddr *) &servaddr, sizeof(servaddr));
 
+    // Слушаем сокет
+    char buffer[BUFSIZ];
+    memset(buffer, 0, BUFSIZ);
+    bytes = Recvfrom(server_sock, buffer, BUFSIZ, MSG_WAITALL, 
+                     (struct sockaddr *) &clntaddr, &clntlen);
+
     // Парсим информацию
     id_t clntnum = -1;
     sscanf(buffer, "Client #%d is launched", &clntnum);
@@ -86,17 +87,4 @@ void signal_handler(int signalno) {
     Close(server_sock);
     printf("\n[%d] Server is shutdown\n", pid);
     exit(EXIT_SUCCESS);
-}
-
-int proc_in(void *params) {
-    // Слушаем сокет
-    char buffer[BUFSIZ];
-    memset(buffer, 0, BUFSIZ);
-    bytes = Recvfrom(server_sock, buffer, BUFSIZ, MSG_WAITALL, 
-                     (struct sockaddr *) &clntaddr, &clntlen);
-
-    // Парсим информацию
-    
-
-    return 0;
 }
