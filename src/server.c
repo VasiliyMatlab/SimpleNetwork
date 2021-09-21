@@ -26,7 +26,7 @@ bool *clients;
 // Серверный сокет
 int server_sock;
 // Команда, которую необходимо послать на клиент
-cmd_out send_command = OUT_NONE;
+volatile cmd_out send_command = OUT_NONE;
 // Сетевые параметры клиента, на которого необходимо послать команду
 struct sockaddr_in clnt_dest = {0};
 socklen_t clnt_dest_len = sizeof(clnt_dest);
@@ -129,11 +129,11 @@ void *input_thread(void *args) {
         
         // Парсим информацию
         cmd_in type = IN_NONE;
+        id_t clntnum = -1;
         type = parser_in(buffer);
         switch (type) {
             // Если клиент пытается подключиться
             case IN_LAUNCH:
-                id_t clntnum = -1;
                 sscanf(buffer, "Client #%d is launched", &clntnum);
                 clnt_dest = clntaddr;
                 clnt_dest_len = clntlen;
@@ -154,6 +154,10 @@ void *input_thread(void *args) {
                 break;
             // Если клиент отключается
             case IN_SHUTDOWN:
+                sscanf(buffer, "Client #%d is shutdown", &clntnum);
+                memset(&(clnt_base[clntnum-1]), 0, sizeof(clnt_base[clntnum-1]));
+                printf("[%d] Client #%d is shutdown\n", pid, clntnum);
+                clients[clntnum-1] = false;
                 break;
             // Иначе продолжаем слушать
             default:
