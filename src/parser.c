@@ -6,8 +6,10 @@
 
 // Парсер приема сообщений от клиентов
 cmd_in parser_in(char *str) {
+    char str_copy[BUFSIZ];
+    strcpy(str_copy, str);
     cmd_in out = IN_NONE;
-    char *tmp = strtok(str, " ");
+    char *tmp = strtok(str_copy, " ");
     while (tmp != NULL) {
         if (!strcmp(tmp, "launched")) {
             out = IN_LAUNCH;
@@ -23,7 +25,6 @@ cmd_in parser_in(char *str) {
         }
         tmp = strtok(NULL, " ");
     }
-    free(tmp);
     if (out == IN_NONE) {
         fprintf(stderr, "Parser error: unknown message type\n");
         exit(EXIT_FAILURE);
@@ -33,8 +34,10 @@ cmd_in parser_in(char *str) {
 
 // Парсер выдачи сообщений клиентам
 cmd_out parser_out(char *str) {
+    char str_copy[BUFSIZ];
+    strcpy(str_copy, str);
     cmd_out out = OUT_NONE;
-    char *tmp = strtok(str, " ");
+    char *tmp = strtok(str_copy, " ");
     if (!strcmp(tmp, "Deny"))
         out = OUT_DENY;
     else if (!strcmp(tmp, "Client"))
@@ -45,7 +48,6 @@ cmd_out parser_out(char *str) {
         out = OUT_SETSTATE;
     else if (!strcmp(tmp, "Shutdown"))
         out = OUT_SHUTDOWN;
-    free(tmp);
     if (out == OUT_NONE) {
         fprintf(stderr, "Parser error: unknown message type\n");
         exit(EXIT_FAILURE);
@@ -55,8 +57,10 @@ cmd_out parser_out(char *str) {
 
 // Парсер принимаемых команд от пользователя
 cmd_terminal parser_terminal(char *str) {
+    char str_copy[BUFSIZ];
+    strcpy(str_copy, str);
     cmd_terminal out = TERM_NONE;
-    char *tmp = strtok(str, " ");
+    char *tmp = strtok(str_copy, " ");
     if (!strcmp(tmp, "Is"))
         out = TERM_LAUNCH;
     else if (!strcmp(tmp, "Get"))
@@ -74,7 +78,6 @@ cmd_terminal parser_terminal(char *str) {
             exit(EXIT_FAILURE);
         }
     }
-    free(tmp);
     return out;
 }
 

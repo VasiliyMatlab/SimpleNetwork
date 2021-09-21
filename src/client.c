@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
     servaddr.sin_port = htons(PORT);
     socklen_t servlen = sizeof(servaddr);
 
-    // Посылаем информацию о клиенте на сервер
+    // Пытаемся подключиться на сервер
     char buffer[BUFSIZ];
     sprintf(buffer, "Client #%d is launched", id);
     Sendto(client_sock, buffer, strlen(buffer), MSG_CONFIRM, 
@@ -66,22 +66,14 @@ int main(int argc, char *argv[]) {
     memset(buffer, 0, BUFSIZ);
     bytes = Recvfrom(client_sock, buffer, BUFSIZ, MSG_WAITALL, 
                      (struct sockaddr *) &servaddr, &servlen);
-    id_t tmp = -1;
     if (!strcmp(buffer, "Deny")) {
         fprintf(stderr, "Connection error: client with id = %d "
             "is already exist\n", id);
         Close(client_sock);
         exit(EXIT_FAILURE);
     }
-    sscanf(buffer, "Client #%d is connected to server", &tmp);
-    if (tmp == id)
-        printf("[%d] Client #%d is connected to server\n", pid, id);
-    else {
-        fprintf(stderr, "Connection error: wrong received id from server\n");
-        fprintf(stderr, "Connection is terminated\n");
-        Close(client_sock);
-        exit(EXIT_FAILURE);
-    }
+    sscanf(buffer, "Client is connected to server");
+    printf("[%d] Client #%d is connected to server\n", pid, id);
 
     // Инициализация и изменение состояний клиента
     state_t state = OFF;
@@ -93,8 +85,14 @@ int main(int argc, char *argv[]) {
     state = ALL;
     print_client_state(id, pid, state);
 
+    // Отключение от сервера
+    sleep(3);
+    memset(buffer, 0, BUFSIZ);
+    sprintf(buffer, "Client #%d is shutdown", id);
+    Sendto(client_sock, buffer, strlen(buffer), MSG_CONFIRM, 
+           (const struct sockaddr *) &servaddr, servlen);
+
     // Выключение клиента
-    sleep(2);
     Close(client_sock);
     printf("[%d] Client #%d is shutdown\n", pid, id);
     exit(EXIT_SUCCESS);

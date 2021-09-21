@@ -46,19 +46,18 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
-    // Создаем потоки
-    Pthread_create(&thread_in,  NULL, input_thread,  NULL);
-    Pthread_create(&thread_out, NULL, output_thread, NULL);
+    // Лог клиентов
+    clients = (bool *) malloc(BACKLOG*sizeof(bool));
+    for (int i = 0; i < BACKLOG; i++)
+        clients[i] = false;
 
+    
     // Запуск сервера
     pid = getpid();
     printf("[%d] Server is launched\n", pid);
     //sleep(2);
 
-    // Лог клиентов
-    clients = (bool *) malloc(BACKLOG*sizeof(bool));
-    for (int i = 0; i < BACKLOG; i++)
-        clients[i] = false;
+    
 
     // Создание сокета
     server_sock = Socket(AF_INET, SOCK_DGRAM, 0);
@@ -69,38 +68,11 @@ int main() {
     servaddr.sin_port = htons(PORT);
     // Связывание сокета с адресом сервера
     Bind(server_sock, (const struct sockaddr *) &servaddr, sizeof(servaddr));
-
-    /*
-    // Слушаем сокет
-    struct sockaddr_in clntaddr = {0};
-    socklen_t clntlen = sizeof(clntaddr);
-    char buffer[BUFSIZ];
-    memset(buffer, 0, BUFSIZ);
-    Recvfrom(server_sock, buffer, BUFSIZ, MSG_WAITALL, 
-             (struct sockaddr *) &clntaddr, &clntlen);
-
-    // Парсим информацию
-    id_t clntnum = -1;
-    sscanf(buffer, "Client #%d is launched", &clntnum);
-    memset(buffer, 0, BUFSIZ);
-    // Если клиент с таким id уже подключен, то отклоняем подключение
-    if (clients[clntnum-1]) {
-        sprintf(buffer, "Deny");
-        Sendto(server_sock, buffer, strlen(buffer), MSG_CONFIRM,
-               (const struct sockaddr *) &clntaddr, clntlen);
-    }
-    // Иначе отсылаем подтверждение об успешном подключении на клиент
-    else {
-        printf("[%d] Client #%d is connected to server\n", pid, clntnum);
-        clients[clntnum-1] = true;
-        sprintf(buffer, "Client #%d is connected to server", clntnum);
-        Sendto(server_sock, buffer, strlen(buffer), MSG_CONFIRM, 
-            (const struct sockaddr *) &clntaddr, clntlen);
-    }
-    */
-
+    // Создаем потоки
+    Pthread_create(&thread_in,  NULL, input_thread,  NULL);
+    Pthread_create(&thread_out, NULL, output_thread, NULL);
     // Выключение сервера
-    sleep(5);
+    sleep(500);
     Pthread_join(thread_in, NULL);
     Pthread_join(thread_out, NULL);
     free(clients);
@@ -121,7 +93,7 @@ void signal_handler(int signalno) {
 void *input_thread(void *args) {
     // Пока есть подключенные клиенты,
     // продолжаем работу
-    while (is_active_clients()) {
+    while (true) {
         struct sockaddr_in clntaddr = {0};
         socklen_t clntlen = sizeof(clntaddr);
         char buffer[BUFSIZ];
@@ -129,12 +101,11 @@ void *input_thread(void *args) {
         // Слушаем сокет
         Recvfrom(server_sock, buffer, BUFSIZ, MSG_WAITALL, 
                 (struct sockaddr *) &clntaddr, &clntlen);
-        
         // Парсим информацию
         cmd_in type = IN_NONE;
         id_t clntnum;
         type = parser_in(buffer);
-        switch (type) {
+        switch ((int) type) {
             // Если клиент пытается подключиться
             case IN_LAUNCH:
                 sscanf(buffer, "Client #%d is launched", &clntnum);
@@ -153,11 +124,12 @@ void *input_thread(void *args) {
                 }
                 break;
             // Если клиент высылает свое состояние
-            case IN_STATE:
-                state_t cur_state;
-                sscanf(buffer, "Client #%d is in state: %d", &clntnum, &cur_state);
+            case IN_STATE: {
+                state_t cur_state = OFF;
+                sscanf(buffer, "Client #%d is in state: %d", &clntnum, (int *) &cur_state);
                 print_client_state(clntnum, pid, cur_state);
                 break;
+            }
             // Если клиент отключается
             case IN_SHUTDOWN:
                 sscanf(buffer, "Client #%d is shutdown", &clntnum);
@@ -178,7 +150,7 @@ void *output_thread(void *args) {
         // Ждем прихода команды
         while (send_command == OUT_NONE)
             Usleep(10);
-        switch (send_command) {
+        switch ((int) send_command) {
             // В случае отклонения подключения клиента
             case OUT_DENY:
                 sprintf(buffer, "Deny");
