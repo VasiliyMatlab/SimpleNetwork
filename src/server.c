@@ -28,6 +28,8 @@ bool *clients;
 int server_sock;
 // Команда, которую необходимо послать на клиент
 volatile cmd_out send_command = OUT_NONE;
+// Состояние, которое необходимо выставить на клиенте
+volatile state_t send_state;
 // Сетевые параметры клиента, на которого необходимо послать команду
 struct sockaddr_in clnt_dest = {0};
 socklen_t clnt_dest_len = sizeof(clnt_dest);
@@ -180,24 +182,27 @@ void *output_thread(void *args) {
             // В случае отклонения подключения клиента
             case OUT_DENY:
                 sprintf(buffer, "Deny");
-                Sendto(server_sock, buffer, strlen(buffer), MSG_CONFIRM,
-                       (const struct sockaddr *) &clnt_dest, clnt_dest_len);
-                memset(&clnt_dest, 0, sizeof(clnt_dest));
-                clnt_dest_len = 0;
                 break;
             // В случае успешного подключения клиента
             case OUT_CONN:
+                sprintf(buffer, "Client is connected to server");
                 break;
             // Необходимо выдать состояние клиента
             case OUT_GETSTATE:
+                sprintf(buffer, "Get state");
                 break;
             // Необходимо установить состояние клиента
             case OUT_SETSTATE:
+                sprintf(buffer, "Set state: %d", send_state);
                 break;
             // В случае отключения клиента
             case OUT_SHUTDOWN:
-
+                sprintf(buffer, "Shutdown");
         }
+        Sendto(server_sock, buffer, strlen(buffer), MSG_CONFIRM,
+               (const struct sockaddr *) &clnt_dest, clnt_dest_len);
+        memset(&clnt_dest, 0, sizeof(clnt_dest));
+        clnt_dest_len = 0;
         send_command = OUT_NONE;
     }
     pthread_exit(EXIT_SUCCESS);
