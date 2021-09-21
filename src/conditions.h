@@ -8,10 +8,7 @@ typedef enum {
     YELLOW   = 0b0010,
     GREEN    = 0b0100,
     ALL      = 0b0111
-} States_t;
-
-// Тип переменных состояния клиента
-typedef unsigned char state_t;
+} state_t;
 
 // Вывод на экран состояния клиента
 void print_client_state(id_t id, pid_t pid, state_t state);

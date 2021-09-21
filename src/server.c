@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include "internal.h"
+#include "conditions.h"
 #include "parser.h"
 #include "network.h"
 
@@ -129,7 +130,7 @@ void *input_thread(void *args) {
         
         // Парсим информацию
         cmd_in type = IN_NONE;
-        id_t clntnum = -1;
+        id_t clntnum;
         type = parser_in(buffer);
         switch (type) {
             // Если клиент пытается подключиться
@@ -151,6 +152,9 @@ void *input_thread(void *args) {
                 break;
             // Если клиент высылает свое состояние
             case IN_STATE:
+                state_t cur_state;
+                sscanf(buffer, "Client #%d is in state: %d", &clntnum, &cur_state);
+                print_client_state(clntnum, pid, cur_state);
                 break;
             // Если клиент отключается
             case IN_SHUTDOWN:
