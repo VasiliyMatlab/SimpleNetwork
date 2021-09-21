@@ -14,13 +14,24 @@ void signal_handler(int signalno);
 void *input_thread(void *args);
 // Исходящий поток
 void *output_thread(void *args);
+// Проверка, есть ли подключенные клиенты
+bool is_active_clients(void);
 
+// PID сервера
 pid_t pid;
+// TID потоков
 pthread_t thread_in, thread_out;
+// Массив подключенных клиентов
 bool *clients;
+// Серверный сокет
 int server_sock;
-struct sockaddr_in clntaddr = {0};
-socklen_t clntlen = sizeof(clntaddr);
+// Команда, которую необходимо послать на клиент
+cmd_out send_command = OUT_NONE;
+// Сетевые параметры клиента, на которого необходимо послать команду
+struct sockaddr_in clnt_dest = {0};
+socklen_t clnt_dest_len = sizeof(clnt_dest);
+// База данных о сетевых параметрах всех клиентов
+struct sockaddr_in clnt_base[BACKLOG] = {0};
 
 int main() {
     // Задаем обработчик сигналов
@@ -56,7 +67,10 @@ int main() {
     // Связывание сокета с адресом сервера
     Bind(server_sock, (const struct sockaddr *) &servaddr, sizeof(servaddr));
 
+    /*
     // Слушаем сокет
+    struct sockaddr_in clntaddr = {0};
+    socklen_t clntlen = sizeof(clntaddr);
     char buffer[BUFSIZ];
     memset(buffer, 0, BUFSIZ);
     Recvfrom(server_sock, buffer, BUFSIZ, MSG_WAITALL, 
@@ -80,6 +94,7 @@ int main() {
         Sendto(server_sock, buffer, strlen(buffer), MSG_CONFIRM, 
             (const struct sockaddr *) &clntaddr, clntlen);
     }
+    */
 
     // Выключение сервера
     sleep(5);
@@ -101,7 +116,50 @@ void signal_handler(int signalno) {
 
 // Входящий поток
 void *input_thread(void *args) {
-    printf("Hello from input_thread!\n");
+    // Пока есть подключенные клиенты,
+    // продолжаем работу
+    while (is_active_clients()) {
+        struct sockaddr_in clntaddr = {0};
+        socklen_t clntlen = sizeof(clntaddr);
+        char buffer[BUFSIZ];
+        memset(buffer, 0, BUFSIZ);
+        // Слушаем сокет
+        Recvfrom(server_sock, buffer, BUFSIZ, MSG_WAITALL, 
+                (struct sockaddr *) &clntaddr, &clntlen);
+        
+        // Парсим информацию
+        cmd_in type = IN_NONE;
+        type = parser_in(buffer);
+        switch (type) {
+            // Если клиент пытается подключиться
+            case IN_LAUNCH:
+                id_t clntnum = -1;
+                sscanf(buffer, "Client #%d is launched", &clntnum);
+                clnt_dest = clntaddr;
+                clnt_dest_len = clntlen;
+                // Если клиент с таким id уже подключен, то отклоняем подключение
+                if (clients[clntnum-1]) {
+                    send_command = OUT_DENY;
+                }
+                // Иначе отсылаем подтверждение об успешном подключении на клиент
+                else {
+                    clnt_base[clntnum-1] = clntaddr;
+                    printf("[%d] Client #%d is connected to server\n", pid, clntnum);
+                    clients[clntnum-1] = true;
+                    send_command = OUT_CONN;
+                }
+                break;
+            // Если клиент высылает свое состояние
+            case IN_STATE:
+                break;
+            // Если клиент отключается
+            case IN_SHUTDOWN:
+                break;
+            // Иначе продолжаем слушать
+            default:
+                continue;
+        }
+    }
     pthread_exit(EXIT_SUCCESS);
 }
 
@@ -109,4 +167,12 @@ void *input_thread(void *args) {
 void *output_thread(void *args) {
     printf("Hello from output_thread!\n");
     pthread_exit(EXIT_SUCCESS);
+}
+
+// Проверка, есть ли подключенные клиенты
+bool is_active_clients(void) {
+    for (int i = 0; i < BACKLOG; i++)
+        if (clients[i])
+            return true;
+    return false;
 }
