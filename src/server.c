@@ -5,15 +5,20 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include "internal.h"
+#include "parser.h"
 #include "network.h"
 
 // Обработчик сигналов
 void signal_handler(int signalno);
+// Входящий поток
+void *input_thread(void *args);
+// Исходящий поток
+void *output_thread(void *args);
 
-pid_t pid, pid1, pid2;
+pid_t pid;
+pthread_t thread_in, thread_out;
 bool *clients;
 int server_sock;
-ssize_t bytes;
 struct sockaddr_in clntaddr = {0};
 socklen_t clntlen = sizeof(clntaddr);
 
@@ -27,6 +32,10 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
+    // Создаем потоки
+    Pthread_create(&thread_in,  NULL, input_thread,  NULL);
+    Pthread_create(&thread_out, NULL, output_thread, NULL);
+
     // Запуск сервера
     pid = getpid();
     printf("[%d] Server is launched\n", pid);
@@ -36,7 +45,6 @@ int main() {
     clients = (bool *) malloc(BACKLOG*sizeof(bool));
     for (int i = 0; i < BACKLOG; i++)
         clients[i] = false;
-    clients[2] = true;
 
     // Создание сокета
     server_sock = Socket(AF_INET, SOCK_DGRAM, 0);
@@ -51,8 +59,8 @@ int main() {
     // Слушаем сокет
     char buffer[BUFSIZ];
     memset(buffer, 0, BUFSIZ);
-    bytes = Recvfrom(server_sock, buffer, BUFSIZ, MSG_WAITALL, 
-                     (struct sockaddr *) &clntaddr, &clntlen);
+    Recvfrom(server_sock, buffer, BUFSIZ, MSG_WAITALL, 
+             (struct sockaddr *) &clntaddr, &clntlen);
 
     // Парсим информацию
     id_t clntnum = -1;
@@ -74,7 +82,9 @@ int main() {
     }
 
     // Выключение сервера
-    sleep(2000000);
+    sleep(5);
+    Pthread_join(thread_in, NULL);
+    Pthread_join(thread_out, NULL);
     free(clients);
     Close(server_sock);
     printf("[%d] Server is shutdown\n", pid);
@@ -87,4 +97,16 @@ void signal_handler(int signalno) {
     Close(server_sock);
     printf("\n[%d] Server is shutdown\n", pid);
     exit(EXIT_SUCCESS);
+}
+
+// Входящий поток
+void *input_thread(void *args) {
+    printf("Hello from input_thread!\n");
+    pthread_exit(EXIT_SUCCESS);
+}
+
+// Исходящий поток
+void *output_thread(void *args) {
+    printf("Hello from output_thread!\n");
+    pthread_exit(EXIT_SUCCESS);
 }

@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
     print_client_state(id, pid, state);
 
     // Выключение клиента
-    sleep(20);
+    sleep(2);
     Close(client_sock);
     printf("[%d] Client #%d is shutdown\n", pid, id);
     exit(EXIT_SUCCESS);
