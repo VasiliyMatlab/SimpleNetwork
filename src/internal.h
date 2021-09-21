@@ -13,5 +13,7 @@ ssize_t Read(int fd, void *buf, size_t count);
 void Remove(const char *pathname);
 // Переопределение системного вызова write(2)
 ssize_t Write(int fd, const void *buf, size_t count);
+// Переопределение вызова usleep(3)
+void Usleep(useconds_t usec);
 
 #endif

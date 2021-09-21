@@ -64,3 +64,12 @@ ssize_t Write(int fd, const void *buf, size_t count) {
     }
     return bytes;
 }
+
+// Переопределение вызова usleep(3)
+void Usleep(useconds_t usec) {
+    int status = usleep(usec);
+    if (status == -1) {
+        perror("usleep failed");
+        exit(EXIT_FAILURE);
+    }
+}

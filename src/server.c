@@ -163,9 +163,6 @@ void *input_thread(void *args) {
                 printf("[%d] Client #%d is shutdown\n", pid, clntnum);
                 clients[clntnum-1] = false;
                 break;
-            // Иначе продолжаем слушать
-            default:
-                continue;
         }
     }
     pthread_exit(EXIT_SUCCESS);
@@ -173,7 +170,36 @@ void *input_thread(void *args) {
 
 // Исходящий поток
 void *output_thread(void *args) {
-    printf("Hello from output_thread!\n");
+    while (true) {
+        char buffer[BUFSIZ];
+        memset(buffer, 0, BUFSIZ);
+        // Ждем прихода команды
+        while (send_command == OUT_NONE)
+            Usleep(10);
+        switch (send_command) {
+            // В случае отклонения подключения клиента
+            case OUT_DENY:
+                sprintf(buffer, "Deny");
+                Sendto(server_sock, buffer, strlen(buffer), MSG_CONFIRM,
+                       (const struct sockaddr *) &clnt_dest, clnt_dest_len);
+                memset(&clnt_dest, 0, sizeof(clnt_dest));
+                clnt_dest_len = 0;
+                break;
+            // В случае успешного подключения клиента
+            case OUT_CONN:
+                break;
+            // Необходимо выдать состояние клиента
+            case OUT_GETSTATE:
+                break;
+            // Необходимо установить состояние клиента
+            case OUT_SETSTATE:
+                break;
+            // В случае отключения клиента
+            case OUT_SHUTDOWN:
+
+        }
+        send_command = OUT_NONE;
+    }
     pthread_exit(EXIT_SUCCESS);
 }
 
