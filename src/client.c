@@ -7,6 +7,7 @@
 #include "internal.h"
 #include "network.h"
 #include "conditions.h"
+#include "parser.h"
 
 // Обработчик сигналов
 void signal_handler(int signalno);
@@ -14,7 +15,9 @@ void signal_handler(int signalno);
 pid_t pid;
 id_t id;
 int client_sock;
-ssize_t bytes;
+state_t state = OFF;
+struct sockaddr_in servaddr = {0};
+socklen_t servlen = sizeof(servaddr);
 
 int main(int argc, char *argv[]) {
     // Задаем обработчик сигналов
@@ -45,53 +48,66 @@ int main(int argc, char *argv[]) {
     // Запуск клиента
     pid = getpid();
     printf("[%d] Client #%d is launched\n", pid, id);
-    sleep(2);
     
     // Создание сокета
     client_sock = Socket(AF_INET, SOCK_DGRAM, 0);
-    struct sockaddr_in servaddr = {0};
     // Заполнение информации о сервере
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = INADDR_ANY;
     servaddr.sin_port = htons(PORT);
-    socklen_t servlen = sizeof(servaddr);
+    servlen = sizeof(servaddr);
 
     // Пытаемся подключиться на сервер
+    printf("[%d] Trying to connect with server\n", pid);
     char buffer[BUFSIZ];
     sprintf(buffer, "Client #%d is launched", id);
     Sendto(client_sock, buffer, strlen(buffer), MSG_CONFIRM, 
            (const struct sockaddr *) &servaddr, servlen);
 
-    // Принимаем ответ сервера
-    memset(buffer, 0, BUFSIZ);
-    bytes = Recvfrom(client_sock, buffer, BUFSIZ, MSG_WAITALL, 
-                     (struct sockaddr *) &servaddr, &servlen);
-    if (!strcmp(buffer, "Deny")) {
-        fprintf(stderr, "Connection error: client with id = %d "
-            "is already exist\n", id);
-        Close(client_sock);
-        exit(EXIT_FAILURE);
+
+    while (true) {
+        // Слушаем сокет
+        memset(buffer, 0, BUFSIZ);
+        Recvfrom(client_sock, buffer, BUFSIZ, MSG_WAITALL, 
+                 (struct sockaddr *) &servaddr, &servlen);
+        // Парсим информацию
+        cmd_out type = OUT_NONE;
+        type = parser_out(buffer);
+        switch ((int) type) {
+            // В случае отклонения подключения клиента
+            case OUT_DENY:
+                printf("[%d] Unable to connect to server\n", pid);
+                printf("[%d] Termination of the process\n", pid);
+                goto end_loop;
+                break;
+            // В случае успешного подключения клиента
+            case OUT_CONN:
+                printf("[%d] Client is connected to server\n", pid);
+                print_client_state(id, pid, state);
+                break;
+            // Необходимо установить состояние клиента
+            case OUT_SETSTATE:
+                sscanf(buffer, "Set state: %d", (int *) &state);
+                print_client_state(id, pid, state);
+            // Необходимо выдать состояние клиента
+            case OUT_GETSTATE:
+                memset(buffer, 0, BUFSIZ);
+                sprintf(buffer, "Client #%d is in state: %d", id, state);
+                Sendto(client_sock, buffer, strlen(buffer), MSG_CONFIRM, 
+                    (const struct sockaddr *) &servaddr, servlen);
+                break;
+            // В случае отключения клиента от сервера
+            case OUT_SHUTDOWN:
+                memset(buffer, 0, BUFSIZ);
+                sprintf(buffer, "Client #%d is shutdown", id);
+                Sendto(client_sock, buffer, strlen(buffer), MSG_CONFIRM, 
+                    (const struct sockaddr *) &servaddr, servlen);
+                goto end_loop;
+        }
     }
-    sscanf(buffer, "Client is connected to server");
-    printf("[%d] Client #%d is connected to server\n", pid, id);
+    
 
-    // Инициализация и изменение состояний клиента
-    state_t state = OFF;
-    print_client_state(id, pid, state);
-    //sleep(2);
-    state = YELLOW | RED;
-    print_client_state(id, pid, state);
-    //sleep(2);
-    state = ALL;
-    print_client_state(id, pid, state);
-
-    // Отключение от сервера
-    sleep(3);
-    memset(buffer, 0, BUFSIZ);
-    sprintf(buffer, "Client #%d is shutdown", id);
-    Sendto(client_sock, buffer, strlen(buffer), MSG_CONFIRM, 
-           (const struct sockaddr *) &servaddr, servlen);
-
+    end_loop: ;
     // Выключение клиента
     Close(client_sock);
     printf("[%d] Client #%d is shutdown\n", pid, id);
@@ -100,6 +116,10 @@ int main(int argc, char *argv[]) {
 
 // Обработчик сигналов
 void signal_handler(int signalno) {
+    char buffer[BUFSIZ];
+    sprintf(buffer, "Client #%d is shutdown", id);
+    Sendto(client_sock, buffer, strlen(buffer), MSG_CONFIRM, 
+           (const struct sockaddr *) &servaddr, servlen);
     Close(client_sock);
     printf("\n[%d] Client #%d is shutdown\n", pid, id);
     exit(EXIT_SUCCESS);

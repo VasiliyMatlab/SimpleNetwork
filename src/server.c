@@ -136,7 +136,6 @@ void *input_thread(void *args) {
                 memset(&(clnt_base[clntnum-1]), 0, sizeof(clnt_base[clntnum-1]));
                 printf("[%d] Client #%d is shutdown\n", pid, clntnum);
                 clients[clntnum-1] = false;
-                break;
         }
     }
     pthread_exit(EXIT_SUCCESS);
@@ -167,7 +166,7 @@ void *output_thread(void *args) {
             case OUT_SETSTATE:
                 sprintf(buffer, "Set state: %d", send_state);
                 break;
-            // В случае отключения клиента
+            // В случае отключения клиента от сервера
             case OUT_SHUTDOWN:
                 sprintf(buffer, "Shutdown");
         }
