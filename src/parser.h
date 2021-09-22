@@ -37,10 +37,10 @@ cmd_in parser_in(char *str);
 cmd_out parser_out(char *str);
 // Парсер принимаемых команд от пользователя
 cmd_terminal parser_terminal(char *str);
-// Переопределение вызова pthread_create(2)
+// Переопределение вызова pthread_create(3)
 void Pthread_create(pthread_t *thread, const pthread_attr_t *attr,
                    void *(*start_routine) (void *), void *arg);
-// Переопределение вызова pthread_join(2)
-void Pthread_join(pthread_t thread, void **retval);
+// Переопределение вызова pthread_cancel(3)
+void Pthread_cancel(pthread_t thread);
 
 #endif

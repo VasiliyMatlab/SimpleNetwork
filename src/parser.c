@@ -96,12 +96,12 @@ void Pthread_create(pthread_t *thread, const pthread_attr_t *attr,
                 exit(EAGAIN);
             case EINVAL:
                 fprintf(stderr, "Threads error: prthread_create failed: "
-                    "invalid settings in attr.\n");
+                    "invalid settings in \e[4mattr\e[0m.\n");
                 exit(EINVAL);
             case EPERM:
                 fprintf(stderr, "Threads error: prthread_create failed: "
                     "no permission to set the scheduling policy "
-                    "and parameters specified in attr.\n");
+                    "and parameters specified in \e[4mattr\e[0m.\n");
                 exit(EPERM);
             default:
                 fprintf(stderr, "Threads error: prthread_create failed: "
@@ -111,32 +111,12 @@ void Pthread_create(pthread_t *thread, const pthread_attr_t *attr,
     }
 }
 
-// Переопределение вызова pthread_join(2)
-void Pthread_join(pthread_t thread, void **retval) {
-    int status;
-    status = pthread_join(thread, retval);
+// Переопределение вызова pthread_cancel(3)
+void Pthread_cancel(pthread_t thread) {
+    int status = pthread_cancel(thread);
     if (status != 0) {
-        switch (status) {
-            case EDEADLK:
-                fprintf(stderr, "Threads error: prthread_join failed: "
-                    "a deadlock was detected "
-                    "(e.g., two threads tried to join with each other); "
-                    "or thread specifies the calling thread.\n");
-                exit(EDEADLK);
-            case EINVAL:
-                fprintf(stderr, "Threads error: prthread_join failed: "
-                    "thread is not a joinable thread.\nor\n");
-                fprintf(stderr, "another thread is already waiting "
-                    "to join with this thread.\n");
-                exit(EINVAL);
-            case ESRCH:
-                fprintf(stderr, "Threads error: prthread_join failed: "
-                    "no thread with the ID thread could be found.\n");
-                exit(ESRCH);
-            default:
-                fprintf(stderr, "Threads error: prthread_join failed: "
-                    "unknown type of error.\n");
-                exit(EXIT_FAILURE);
-        }
+        fprintf(stderr, "Threads error: prthread_cancel failed: "
+            "no thread with the ID \e[4mthread\e[0m could be found.\n");
+        exit(ESRCH);
     }
 }

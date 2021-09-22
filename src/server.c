@@ -45,19 +45,15 @@ int main() {
         perror("signal handler failed");
         exit(EXIT_FAILURE);
     }
+    
+    // Запуск сервера
+    pid = getpid();
+    printf("[%d] Server is launched\n", pid);
 
     // Лог клиентов
     clients = (bool *) malloc(BACKLOG*sizeof(bool));
     for (int i = 0; i < BACKLOG; i++)
         clients[i] = false;
-
-    
-    // Запуск сервера
-    pid = getpid();
-    printf("[%d] Server is launched\n", pid);
-    //sleep(2);
-
-    
 
     // Создание сокета
     server_sock = Socket(AF_INET, SOCK_DGRAM, 0);
@@ -68,13 +64,70 @@ int main() {
     servaddr.sin_port = htons(PORT);
     // Связывание сокета с адресом сервера
     Bind(server_sock, (const struct sockaddr *) &servaddr, sizeof(servaddr));
-    // Создаем потоки
+
+    // Создание потоков
     Pthread_create(&thread_in,  NULL, input_thread,  NULL);
     Pthread_create(&thread_out, NULL, output_thread, NULL);
+    
+    // Управление пользователем
+    while (true) {
+        char buffer[BUFSIZ];
+        fgets(buffer, BUFSIZ-1, stdin);
+        buffer[strlen(buffer)-1] = '\0';
+        cmd_terminal type = TERM_NONE;
+        type = parser_terminal(buffer);
+        switch ((int) type) {
+            // Проверка наличия клиента
+            case TERM_LAUNCH: {
+                int clntnum;
+                sscanf(buffer, "Is client #%d is on?", &clntnum);
+                if ((clntnum < 1) || (clntnum > BACKLOG))
+                    printf("[%d] Invalid ID; ID must be in [1..%d]\n", pid, BACKLOG);
+                else if (clients[clntnum-1])
+                    printf("[%d] Client #%d is linked with server\n", pid, clntnum);
+                else
+                    printf("[%d] Client #%d is not linked with server\n", pid, clntnum);
+                break;
+            }
+            // Выдать состояние клиента
+            case TERM_GETSTATE:
+                break;
+            // Установить состояние клиенту
+            case TERM_SETSTATE:
+                break;
+            // Выключение клиента
+            case TERM_SHDWN_CLNT: {
+                int clntnum;
+                sscanf(buffer, "Shutdown client #%d", &clntnum);
+                if ((clntnum < 1) || (clntnum > BACKLOG))
+                    printf("[%d] Invalid ID; ID must be in [1..%d]\n", pid, BACKLOG);
+                else if (!clients[clntnum-1])
+                    printf("[%d] Client with id = %d is not linked with server\n", pid, clntnum);
+                else {
+                    clnt_dest = clnt_base[clntnum-1];
+                    clnt_dest_len = sizeof(clnt_dest);
+                    send_command = OUT_SHUTDOWN;
+                }
+                break;
+            }
+            // Выключение сервера
+            case TERM_SHDWN_SERV:
+                for (int i = 0; i < BACKLOG; i++) {
+                    if (clients[i]) {
+                        clnt_dest = clnt_base[i];
+                        clnt_dest_len = sizeof(clnt_dest);
+                        send_command = OUT_SHUTDOWN;
+                        Usleep(1000);
+                    }
+                }
+                goto ending;
+        }
+    }
+
+    ending: ;
     // Выключение сервера
-    sleep(500);
-    Pthread_join(thread_in, NULL);
-    Pthread_join(thread_out, NULL);
+    Pthread_cancel(thread_in);
+    Pthread_cancel(thread_out);
     free(clients);
     Close(server_sock);
     printf("[%d] Server is shutdown\n", pid);
@@ -83,6 +136,8 @@ int main() {
 
 // Обработчик сигналов
 void signal_handler(int signalno) {
+    Pthread_cancel(thread_in);
+    Pthread_cancel(thread_out);
     free(clients);
     Close(server_sock);
     printf("\n[%d] Server is shutdown\n", pid);

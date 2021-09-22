@@ -12,10 +12,15 @@
 // Обработчик сигналов
 void signal_handler(int signalno);
 
+// PID клиента
 pid_t pid;
+// // ID клиента
 id_t id;
+// Клиентский сокет
 int client_sock;
+// Текущее состояние клиента
 state_t state = OFF;
+// Сетевые параметры сервера
 struct sockaddr_in servaddr = {0};
 socklen_t servlen = sizeof(servaddr);
 
@@ -78,7 +83,7 @@ int main(int argc, char *argv[]) {
             case OUT_DENY:
                 printf("[%d] Unable to connect to server\n", pid);
                 printf("[%d] Termination of the process\n", pid);
-                goto end_loop;
+                goto ending;
                 break;
             // В случае успешного подключения клиента
             case OUT_CONN:
@@ -102,12 +107,12 @@ int main(int argc, char *argv[]) {
                 sprintf(buffer, "Client #%d is shutdown", id);
                 Sendto(client_sock, buffer, strlen(buffer), MSG_CONFIRM, 
                     (const struct sockaddr *) &servaddr, servlen);
-                goto end_loop;
+                goto ending;
         }
     }
     
 
-    end_loop: ;
+    ending: ;
     // Выключение клиента
     Close(client_sock);
     printf("[%d] Client #%d is shutdown\n", pid, id);
