@@ -29,7 +29,7 @@ int server_sock;
 // Команда, которую необходимо послать на клиент
 volatile cmd_out send_command = OUT_NONE;
 // Состояние, которое необходимо выставить на клиенте
-volatile state_t send_state;
+state_t send_state;
 // Сетевые параметры клиента, на которого необходимо послать команду
 struct sockaddr_in clnt_dest = {0};
 socklen_t clnt_dest_len = sizeof(clnt_dest);
@@ -90,11 +90,40 @@ int main() {
                 break;
             }
             // Выдать состояние клиента
-            case TERM_GETSTATE:
+            case TERM_GETSTATE: {
+                int clntnum;
+                sscanf(buffer, "Get client #%d current state", &clntnum);
+                if ((clntnum < 1) || (clntnum > BACKLOG))
+                    printf("[%d] Invalid ID; ID must be in [1..%d]\n", pid, BACKLOG);
+                else if (!clients[clntnum-1])
+                    printf("[%d] Client with id = %d is not linked with server\n", pid, clntnum);
+                else {
+                    clnt_dest = clnt_base[clntnum-1];
+                    clnt_dest_len = sizeof(clnt_dest);
+                    send_command = OUT_GETSTATE;
+                }
                 break;
+            }
             // Установить состояние клиенту
-            case TERM_SETSTATE:
+            case TERM_SETSTATE: {
+                int clntnum;
+                //state_t state;
+                sscanf(buffer, "Set client #%d state: %d", &clntnum, (int *) &send_state);
+                if ((clntnum < 1) || (clntnum > BACKLOG))
+                    printf("[%d] Invalid ID: ID must be in [1..%d]\n", pid, BACKLOG);
+                else if (!clients[clntnum-1])
+                    printf("[%d] Client with id = %d is not linked with server\n", pid, clntnum);
+                else if (!isvalidstate(send_state)) {
+                    printf("[%d] Invalid state; client state must be one of the following: ", pid);
+                    print_all_valiable_states();
+                }
+                else {
+                    clnt_dest = clnt_base[clntnum-1];
+                    clnt_dest_len = sizeof(clnt_dest);
+                    send_command = OUT_SETSTATE;
+                }
                 break;
+            }
             // Выключение клиента
             case TERM_SHDWN_CLNT: {
                 int clntnum;
@@ -117,7 +146,7 @@ int main() {
                         clnt_dest = clnt_base[i];
                         clnt_dest_len = sizeof(clnt_dest);
                         send_command = OUT_SHUTDOWN;
-                        Usleep(1000);
+                        Usleep(100);
                     }
                 }
                 goto ending;

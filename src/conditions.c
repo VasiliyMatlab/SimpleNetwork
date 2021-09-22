@@ -70,3 +70,15 @@ unsigned int number_of_states(state_t state) {
             res++;
     return res;
 }
+
+// Проверка, является ли состояние допустимым
+bool isvalidstate(state_t state) {
+    return (state == OFF) || (state == RED) || (state == YELLOW) || (state == GREEN) || 
+           (state == (RED|YELLOW)) || (state == (RED|GREEN)) || (state == (YELLOW|GREEN)) ||
+           (state == ALL);
+}
+
+// Вывод на экран всех доступных состояний для клиента
+void print_all_valiable_states(void) {
+    printf("OFF, RED, YELLOW, GREEN, RED | YELLOW, RED | GREEN, YELLOW | GREEN, ALL\n");
+}
