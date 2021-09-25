@@ -24,7 +24,7 @@ $(BUILD)/client.o: client.c network.h conditions.h internal.h
 	$(CC) $(FLAGS) client.c -o $(BUILD)/client.o
 
 
-$(BUILD)/conditions.o: conditions.c conditions.h internal.h
+$(BUILD)/conditions.o: conditions.c conditions.h internal.h parser.h
 	$(CC) $(FLAGS) conditions.c -o $(BUILD)/conditions.o
 
 $(BUILD)/network.o: network.c network.h

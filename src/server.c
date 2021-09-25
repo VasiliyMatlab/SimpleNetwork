@@ -70,12 +70,16 @@ int main() {
     Pthread_create(&thread_out, NULL, output_thread, NULL);
     
     // Управление пользователем
+    char buffer[BUFSIZ];
     while (true) {
-        char buffer[BUFSIZ];
+        memset(buffer, 0, BUFSIZ);
         fgets(buffer, BUFSIZ-1, stdin);
         buffer[strlen(buffer)-1] = '\0';
         cmd_terminal type = TERM_NONE;
-        type = parser_terminal(buffer);
+        type = parser_terminal(buffer, pid);
+        if (type == -1) {
+            printf("[%d] Command terminated\n", pid);
+        }
         switch ((int) type) {
             // Проверка наличия клиента
             case TERM_LAUNCH: {
@@ -107,20 +111,21 @@ int main() {
             // Установить состояние клиенту
             case TERM_SETSTATE: {
                 int clntnum;
-                //state_t state;
-                sscanf(buffer, "Set client #%d state: %d", &clntnum, (int *) &send_state);
+                sscanf(buffer, "Set client #%d state: ", &clntnum);
                 if ((clntnum < 1) || (clntnum > BACKLOG))
                     printf("[%d] Invalid ID: ID must be in [1..%d]\n", pid, BACKLOG);
                 else if (!clients[clntnum-1])
                     printf("[%d] Client with id = %d is not linked with server\n", pid, clntnum);
-                else if (!isvalidstate(send_state)) {
-                    printf("[%d] Invalid state; client state must be one of the following: ", pid);
-                    print_all_valiable_states();
-                }
                 else {
-                    clnt_dest = clnt_base[clntnum-1];
-                    clnt_dest_len = sizeof(clnt_dest);
-                    send_command = OUT_SETSTATE;
+                    printf("DEBUG: buffer = %s\n", buffer);
+                    send_state = str2state(buffer, pid);
+                    if (send_state == -1)
+                        printf("[%d] Set state to client #%d is terminated\n", pid, clntnum);
+                    else {
+                        clnt_dest = clnt_base[clntnum-1];
+                        clnt_dest_len = sizeof(clnt_dest);
+                        send_command = OUT_SETSTATE;
+                    }
                 }
                 break;
             }

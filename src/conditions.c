@@ -1,7 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "conditions.h"
 #include "internal.h"
+#include "parser.h"
 
 // Вывод на экран состояния клиента
 void print_client_state(id_t id, pid_t pid, state_t state) {
@@ -81,4 +83,33 @@ bool isvalidstate(state_t state) {
 // Вывод на экран всех доступных состояний для клиента
 void print_all_valiable_states(void) {
     printf("OFF, RED, YELLOW, GREEN, RED | YELLOW, RED | GREEN, YELLOW | GREEN, ALL\n");
+}
+
+// Перевод строки в состояние
+state_t str2state(char *str, pid_t pid) {
+    parser_set_state(str);
+    state_t out = OFF;
+    printf("DEBUG: str = %s\n", str);
+    char *tmp = strtok(str, " |");
+    while (tmp != NULL) {
+        printf("DEBUG: tmp = %s\n", tmp);
+        if (!strcmp(tmp, "OFF"))
+            out |= OFF;
+        else if (!strcmp(tmp, "RED"))
+            out |= RED;
+        else if (!strcmp(tmp, "YELLOW"))
+            out |= YELLOW;
+        else if (!strcmp(tmp, "GREEN"))
+            out |= GREEN;
+        else if (!strcmp(tmp, "ALL"))
+            out |= ALL;
+        else {
+            printf("[%d] State error: unknown state\n", pid);
+            printf("[%d] Client state must be one of the following: ", pid);
+            print_all_valiable_states();
+            return -1;
+        }
+        tmp = strtok(NULL, " |");
+    }
+    return (isvalidstate(out)) ? out : -1;
 }

@@ -36,7 +36,9 @@ cmd_in parser_in(char *str);
 // Парсер выдачи сообщений клиентам
 cmd_out parser_out(char *str);
 // Парсер принимаемых команд от пользователя
-cmd_terminal parser_terminal(char *str);
+cmd_terminal parser_terminal(char *str, pid_t pid);
+// Парсер сотояний, устанавливаемых клиенту
+void parser_set_state(char *str);
 // Переопределение вызова pthread_create(3)
 void Pthread_create(pthread_t *thread, const pthread_attr_t *attr,
                    void *(*start_routine) (void *), void *arg);

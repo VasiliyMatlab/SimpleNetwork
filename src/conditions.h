@@ -20,5 +20,7 @@ unsigned int number_of_states(state_t state);
 bool isvalidstate(state_t state);
 // Вывод на экран всех доступных состояний для клиента
 void print_all_valiable_states(void);
+// Перевод строки в состояние
+state_t str2state(char *str, pid_t pid);
 
 #endif
