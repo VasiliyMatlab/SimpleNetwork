@@ -1,29 +1,50 @@
+// Содержание:
+//      Заголовочные файлы
+//      Локальные переменные
+//      Локальные функции
+//      Глобальные функции
+
+//----------------------------Заголовочные файлы-------------------------------
+// Заголовочные файлы из стандартной библиотеки C
+#include <stdbool.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
-#include <signal.h>
 #include <unistd.h>
+
+// Пользовательские заголовочные файлы
+#include "conditions.h"
 #include "internal.h"
 #include "network.h"
-#include "conditions.h"
 #include "parser.h"
 
-// Обработчик сигналов
-void signal_handler(int signalno);
-
+//---------------------------Локальные переменные------------------------------
 // PID клиента
-pid_t pid;
+static pid_t pid;
 // // ID клиента
-id_t id;
+static id_t id;
 // Клиентский сокет
-int client_sock;
+static int client_sock;
 // Текущее состояние клиента
-state_t state = OFF;
+static state_t state = OFF;
 // Сетевые параметры сервера
-struct sockaddr_in servaddr = {0};
-socklen_t servlen = sizeof(servaddr);
+static struct sockaddr_in servaddr = {0};
+static socklen_t servlen = sizeof(servaddr);
 
+//----------------------------Локальные функции--------------------------------
+// Обработчик сигналов
+static void signal_handler(int signalno) {
+    char buffer[BUFSIZ];
+    sprintf(buffer, "Client #%d is shutdown", id);
+    Sendto(client_sock, buffer, strlen(buffer), MSG_CONFIRM, 
+           (const struct sockaddr *) &servaddr, servlen);
+    Close(client_sock);
+    printf("\n[%d] Client #%d is shutdown\n", pid, id);
+    exit(EXIT_SUCCESS);
+}
+
+//----------------------------Глобальные функции-------------------------------
 int main(int argc, char *argv[]) {
     // Задаем обработчик сигналов
     void (*status)(int);
@@ -110,22 +131,10 @@ int main(int argc, char *argv[]) {
                 goto ending;
         }
     }
-    
 
     ending: ;
     // Выключение клиента
     Close(client_sock);
     printf("[%d] Client #%d is shutdown\n", pid, id);
-    exit(EXIT_SUCCESS);
-}
-
-// Обработчик сигналов
-void signal_handler(int signalno) {
-    char buffer[BUFSIZ];
-    sprintf(buffer, "Client #%d is shutdown", id);
-    Sendto(client_sock, buffer, strlen(buffer), MSG_CONFIRM, 
-           (const struct sockaddr *) &servaddr, servlen);
-    Close(client_sock);
-    printf("\n[%d] Client #%d is shutdown\n", pid, id);
     exit(EXIT_SUCCESS);
 }

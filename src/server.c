@@ -1,41 +1,150 @@
+// Содержание:
+//      Заголовочные файлы
+//      Локальные переменные
+//      Локальные функции
+//      Глобальные функции
+
+//----------------------------Заголовочные файлы-------------------------------
+// Заголовочные файлы из стандартной библиотеки C
+#include <signal.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
 #include <unistd.h>
-#include <stdbool.h>
-#include "internal.h"
+
+// Пользовательские заголовочные файлы
 #include "conditions.h"
-#include "parser.h"
+#include "internal.h"
 #include "network.h"
+#include "parser.h"
 
-// Обработчик сигналов
-void signal_handler(int signalno);
-// Входящий поток
-void *input_thread(void *args);
-// Исходящий поток
-void *output_thread(void *args);
-// Проверка, есть ли подключенные клиенты
-bool is_active_clients(void);
-
+//---------------------------Локальные переменные------------------------------
 // PID сервера
-pid_t pid;
+static pid_t pid;
 // TID потоков
-pthread_t thread_in, thread_out;
+static pthread_t thread_in, thread_out;
 // Массив подключенных клиентов
-bool *clients;
+static bool *clients;
 // Серверный сокет
-int server_sock;
+static int server_sock;
 // Команда, которую необходимо послать на клиент
-volatile cmd_out send_command = OUT_NONE;
+volatile static cmd_out send_command = OUT_NONE;
 // Состояние, которое необходимо выставить на клиенте
-state_t send_state;
+static state_t send_state;
 // Сетевые параметры клиента, на которого необходимо послать команду
-struct sockaddr_in clnt_dest = {0};
-socklen_t clnt_dest_len = sizeof(clnt_dest);
+static struct sockaddr_in clnt_dest = {0};
+static socklen_t clnt_dest_len = sizeof(clnt_dest);
 // База данных о сетевых параметрах всех клиентов
-struct sockaddr_in clnt_base[BACKLOG] = {0};
+static struct sockaddr_in clnt_base[BACKLOG] = {0};
 
+//----------------------------Локальные функции--------------------------------
+// Обработчик сигналов
+static void signal_handler(int signalno) {
+    Pthread_cancel(thread_in);
+    Pthread_cancel(thread_out);
+    free(clients);
+    Close(server_sock);
+    printf("\n[%d] Server is shutdown\n", pid);
+    exit(EXIT_SUCCESS);
+}
+
+// Входящий поток
+static void *input_thread(void *args) {
+    while (true) {
+        struct sockaddr_in clntaddr = {0};
+        socklen_t clntlen = sizeof(clntaddr);
+        char buffer[BUFSIZ];
+        memset(buffer, 0, BUFSIZ);
+        // Слушаем сокет
+        Recvfrom(server_sock, buffer, BUFSIZ, MSG_WAITALL, 
+                (struct sockaddr *) &clntaddr, &clntlen);
+        // Парсим информацию
+        cmd_in type = IN_NONE;
+        id_t clntnum;
+        type = parser_in(buffer);
+        switch ((int) type) {
+            // Если клиент пытается подключиться
+            case IN_LAUNCH:
+                sscanf(buffer, "Client #%d is launched", &clntnum);
+                clnt_dest = clntaddr;
+                clnt_dest_len = clntlen;
+                // Если клиент с таким id уже подключен,
+                // то отклоняем подключение
+                if (clients[clntnum-1]) {
+                    send_command = OUT_DENY;
+                }
+                // Иначе отсылаем подтверждение
+                // об успешном подключении на клиент
+                else {
+                    clnt_base[clntnum-1] = clntaddr;
+                    printf("[%d] Client #%d is connected to server\n", pid, 
+                        clntnum);
+                    clients[clntnum-1] = true;
+                    send_command = OUT_CONN;
+                }
+                break;
+            // Если клиент высылает свое состояние
+            case IN_STATE: {
+                state_t cur_state = OFF;
+                sscanf(buffer, "Client #%d is in state: %d", &clntnum, 
+                    (int *) &cur_state);
+                print_client_state(clntnum, pid, cur_state);
+                break;
+            }
+            // Если клиент отключается
+            case IN_SHUTDOWN:
+                sscanf(buffer, "Client #%d is shutdown", &clntnum);
+                if (clients[clntnum-1]) {
+                    memset(&(clnt_base[clntnum-1]), 0, 
+                           sizeof(clnt_base[clntnum-1]));
+                    printf("[%d] Client #%d is shutdown\n", pid, clntnum);
+                    clients[clntnum-1] = false;
+                }
+        }
+    }
+    pthread_exit(EXIT_SUCCESS);
+}
+
+// Исходящий поток
+static void *output_thread(void *args) {
+    while (true) {
+        char buffer[BUFSIZ];
+        memset(buffer, 0, BUFSIZ);
+        // Ждем прихода команды
+        while (send_command == OUT_NONE)
+            Usleep(10);
+        switch ((int) send_command) {
+            // В случае отклонения подключения клиента
+            case OUT_DENY:
+                sprintf(buffer, "Deny");
+                break;
+            // В случае успешного подключения клиента
+            case OUT_CONN:
+                sprintf(buffer, "Client is connected to server");
+                break;
+            // Необходимо выдать состояние клиента
+            case OUT_GETSTATE:
+                sprintf(buffer, "Get state");
+                break;
+            // Необходимо установить состояние клиента
+            case OUT_SETSTATE:
+                sprintf(buffer, "Set state: %d", send_state);
+                break;
+            // В случае отключения клиента от сервера
+            case OUT_SHUTDOWN:
+                sprintf(buffer, "Shutdown");
+        }
+        Sendto(server_sock, buffer, strlen(buffer), MSG_CONFIRM,
+               (const struct sockaddr *) &clnt_dest, clnt_dest_len);
+        memset(&clnt_dest, 0, sizeof(clnt_dest));
+        clnt_dest_len = 0;
+        send_command = OUT_NONE;
+    }
+    pthread_exit(EXIT_SUCCESS);
+}
+
+//----------------------------Глобальные функции-------------------------------
 int main() {
     // Задаем обработчик сигналов
     void (*status)(int);
@@ -175,119 +284,4 @@ int main() {
     Close(server_sock);
     printf("[%d] Server is shutdown\n", pid);
     exit(EXIT_SUCCESS);
-}
-
-// Обработчик сигналов
-void signal_handler(int signalno) {
-    Pthread_cancel(thread_in);
-    Pthread_cancel(thread_out);
-    free(clients);
-    Close(server_sock);
-    printf("\n[%d] Server is shutdown\n", pid);
-    exit(EXIT_SUCCESS);
-}
-
-// Входящий поток
-void *input_thread(void *args) {
-    // Пока есть подключенные клиенты,
-    // продолжаем работу
-    while (true) {
-        struct sockaddr_in clntaddr = {0};
-        socklen_t clntlen = sizeof(clntaddr);
-        char buffer[BUFSIZ];
-        memset(buffer, 0, BUFSIZ);
-        // Слушаем сокет
-        Recvfrom(server_sock, buffer, BUFSIZ, MSG_WAITALL, 
-                (struct sockaddr *) &clntaddr, &clntlen);
-        // Парсим информацию
-        cmd_in type = IN_NONE;
-        id_t clntnum;
-        type = parser_in(buffer);
-        switch ((int) type) {
-            // Если клиент пытается подключиться
-            case IN_LAUNCH:
-                sscanf(buffer, "Client #%d is launched", &clntnum);
-                clnt_dest = clntaddr;
-                clnt_dest_len = clntlen;
-                // Если клиент с таким id уже подключен,
-                // то отклоняем подключение
-                if (clients[clntnum-1]) {
-                    send_command = OUT_DENY;
-                }
-                // Иначе отсылаем подтверждение
-                // об успешном подключении на клиент
-                else {
-                    clnt_base[clntnum-1] = clntaddr;
-                    printf("[%d] Client #%d is connected to server\n", pid, 
-                        clntnum);
-                    clients[clntnum-1] = true;
-                    send_command = OUT_CONN;
-                }
-                break;
-            // Если клиент высылает свое состояние
-            case IN_STATE: {
-                state_t cur_state = OFF;
-                sscanf(buffer, "Client #%d is in state: %d", &clntnum, 
-                    (int *) &cur_state);
-                print_client_state(clntnum, pid, cur_state);
-                break;
-            }
-            // Если клиент отключается
-            case IN_SHUTDOWN:
-                sscanf(buffer, "Client #%d is shutdown", &clntnum);
-                if (clients[clntnum-1]) {
-                    memset(&(clnt_base[clntnum-1]), 0, 
-                           sizeof(clnt_base[clntnum-1]));
-                    printf("[%d] Client #%d is shutdown\n", pid, clntnum);
-                    clients[clntnum-1] = false;
-                }
-        }
-    }
-    pthread_exit(EXIT_SUCCESS);
-}
-
-// Исходящий поток
-void *output_thread(void *args) {
-    while (true) {
-        char buffer[BUFSIZ];
-        memset(buffer, 0, BUFSIZ);
-        // Ждем прихода команды
-        while (send_command == OUT_NONE)
-            Usleep(10);
-        switch ((int) send_command) {
-            // В случае отклонения подключения клиента
-            case OUT_DENY:
-                sprintf(buffer, "Deny");
-                break;
-            // В случае успешного подключения клиента
-            case OUT_CONN:
-                sprintf(buffer, "Client is connected to server");
-                break;
-            // Необходимо выдать состояние клиента
-            case OUT_GETSTATE:
-                sprintf(buffer, "Get state");
-                break;
-            // Необходимо установить состояние клиента
-            case OUT_SETSTATE:
-                sprintf(buffer, "Set state: %d", send_state);
-                break;
-            // В случае отключения клиента от сервера
-            case OUT_SHUTDOWN:
-                sprintf(buffer, "Shutdown");
-        }
-        Sendto(server_sock, buffer, strlen(buffer), MSG_CONFIRM,
-               (const struct sockaddr *) &clnt_dest, clnt_dest_len);
-        memset(&clnt_dest, 0, sizeof(clnt_dest));
-        clnt_dest_len = 0;
-        send_command = OUT_NONE;
-    }
-    pthread_exit(EXIT_SUCCESS);
-}
-
-// Проверка, есть ли подключенные клиенты
-bool is_active_clients(void) {
-    for (int i = 0; i < BACKLOG; i++)
-        if (clients[i])
-            return true;
-    return false;
 }

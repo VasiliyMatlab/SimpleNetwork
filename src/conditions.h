@@ -1,6 +1,7 @@
 #ifndef CONDITIONS_H
 #define CONDITIONS_H
 
+// Заголовочные файлы из стандартной библиотеки C
 #include <stdbool.h>
 
 // Состояния клиентов
@@ -14,12 +15,6 @@ typedef enum {
 
 // Вывод на экран состояния клиента
 void print_client_state(id_t id, pid_t pid, state_t state);
-// Вычисление количества состояний клиента
-unsigned int number_of_states(state_t state);
-// Проверка, является ли состояние допустимым
-bool isvalidstate(state_t state);
-// Вывод на экран всех доступных состояний для клиента
-void print_all_valiable_states(void);
 // Перевод строки в состояние
 state_t str2state(char *str, pid_t pid);
 

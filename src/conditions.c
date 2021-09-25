@@ -1,10 +1,48 @@
-#include <stdlib.h>
+// Содержание:
+//      Заголовочные файлы
+//      Локальные функции
+//      Глобальные функции
+
+//----------------------------Заголовочные файлы-------------------------------
+// Заголовочные файлы из стандартной библиотеки C
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+// Пользовательские заголовочные файлы
 #include "conditions.h"
 #include "internal.h"
 #include "parser.h"
 
+//----------------------------Локальные функции--------------------------------
+// Вычисление количества состояний клиента
+static unsigned int number_of_states(state_t state) {
+    if (state == OFF)
+        return 1;
+    if (state == ALL)
+        return 1;
+    unsigned int res = 0;
+    for (char i = 0; i < 3; i++)
+        if (state & (1 << i))
+            res++;
+    return res;
+}
+
+// Проверка, является ли состояние допустимым
+static bool isvalidstate(state_t state) {
+    return (state == OFF) || (state == RED) || (state == YELLOW) || 
+           (state == GREEN) || (state == (RED|YELLOW)) || 
+           (state == (RED|GREEN)) || (state == (YELLOW|GREEN)) ||
+           (state == ALL);
+}
+
+// Вывод на экран всех доступных состояний для клиента
+void print_all_valiable_states(void) {
+    printf("OFF, RED, YELLOW, GREEN, RED | YELLOW, RED | GREEN, "
+           "YELLOW | GREEN, ALL\n");
+}
+
+//----------------------------Глобальные функции-------------------------------
 // Вывод на экран состояния клиента
 void print_client_state(id_t id, pid_t pid, state_t state) {
     unsigned int vol = number_of_states(state);
@@ -58,33 +96,6 @@ void print_client_state(id_t id, pid_t pid, state_t state) {
         fprintf(stderr, "State error: invalid combination of states\n");
         exit(EXIT_FAILURE);
     }
-}
-
-// Вычисление количества состояний клиента
-unsigned int number_of_states(state_t state) {
-    if (state == OFF)
-        return 1;
-    if (state == ALL)
-        return 1;
-    unsigned int res = 0;
-    for (char i = 0; i < 3; i++)
-        if (state & (1 << i))
-            res++;
-    return res;
-}
-
-// Проверка, является ли состояние допустимым
-bool isvalidstate(state_t state) {
-    return (state == OFF) || (state == RED) || (state == YELLOW) || 
-           (state == GREEN) || (state == (RED|YELLOW)) || 
-           (state == (RED|GREEN)) || (state == (YELLOW|GREEN)) ||
-           (state == ALL);
-}
-
-// Вывод на экран всех доступных состояний для клиента
-void print_all_valiable_states(void) {
-    printf("OFF, RED, YELLOW, GREEN, RED | YELLOW, RED | GREEN, "
-           "YELLOW | GREEN, ALL\n");
 }
 
 // Перевод строки в состояние
