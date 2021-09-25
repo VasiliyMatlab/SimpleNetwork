@@ -89,10 +89,8 @@ void print_all_valiable_states(void) {
 state_t str2state(char *str, pid_t pid) {
     parser_set_state(str);
     state_t out = OFF;
-    printf("DEBUG: str = %s\n", str);
     char *tmp = strtok(str, " |");
     while (tmp != NULL) {
-        printf("DEBUG: tmp = %s\n", tmp);
         if (!strcmp(tmp, "OFF"))
             out |= OFF;
         else if (!strcmp(tmp, "RED"))

@@ -70,6 +70,10 @@ cmd_terminal parser_terminal(char *str, pid_t pid) {
         out = TERM_SETSTATE;
     else {
         tmp = strtok(NULL, " ");
+        if (!tmp) {
+            printf("[%d] Parser error: unknown command type\n", pid);
+            return -1;
+        }
         if (!strcmp(tmp, "client"))
             out = TERM_SHDWN_CLNT;
         else if (!strcmp(tmp, "server"))
@@ -88,7 +92,6 @@ void parser_set_state(char *str) {
     memset(out, 0, BUFSIZ); 
     int curr = 0;
 	bool flag = false;
-    printf("DEBUG: strlen(str) = %d, str = %s\n", strlen(str), str);
     for (int i = 0; i < strlen(str); i++) {
 		if (str[i] == ':') {
 			i++;
@@ -99,10 +102,8 @@ void parser_set_state(char *str) {
 			out[curr++] = str[i];
 		}
 	}
-    printf("DEBUG: out = %s\n", out);
     memset(str, 0, BUFSIZ);
     strcpy(str, out);
-    printf("DEBUG: str = %s\n", str);
 }
 
 // Переопределение вызова pthread_create(3)

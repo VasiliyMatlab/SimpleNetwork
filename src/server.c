@@ -117,7 +117,6 @@ int main() {
                 else if (!clients[clntnum-1])
                     printf("[%d] Client with id = %d is not linked with server\n", pid, clntnum);
                 else {
-                    printf("DEBUG: buffer = %s\n", buffer);
                     send_state = str2state(buffer, pid);
                     if (send_state == -1)
                         printf("[%d] Set state to client #%d is terminated\n", pid, clntnum);
@@ -222,9 +221,11 @@ void *input_thread(void *args) {
             // Если клиент отключается
             case IN_SHUTDOWN:
                 sscanf(buffer, "Client #%d is shutdown", &clntnum);
-                memset(&(clnt_base[clntnum-1]), 0, sizeof(clnt_base[clntnum-1]));
-                printf("[%d] Client #%d is shutdown\n", pid, clntnum);
-                clients[clntnum-1] = false;
+                if (clients[clntnum-1]) {
+                    memset(&(clnt_base[clntnum-1]), 0, sizeof(clnt_base[clntnum-1]));
+                    printf("[%d] Client #%d is shutdown\n", pid, clntnum);
+                    clients[clntnum-1] = false;
+                }
         }
     }
     pthread_exit(EXIT_SUCCESS);
