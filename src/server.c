@@ -86,11 +86,14 @@ int main() {
                 int clntnum;
                 sscanf(buffer, "Is client #%d is on?", &clntnum);
                 if ((clntnum < 1) || (clntnum > BACKLOG))
-                    printf("[%d] Invalid ID; ID must be in [1..%d]\n", pid, BACKLOG);
+                    printf("[%d] Invalid ID; ID must be in [1..%d]\n", 
+                        pid, BACKLOG);
                 else if (clients[clntnum-1])
-                    printf("[%d] Client #%d is linked with server\n", pid, clntnum);
+                    printf("[%d] Client #%d is linked with server\n", pid, 
+                        clntnum);
                 else
-                    printf("[%d] Client #%d is not linked with server\n", pid, clntnum);
+                    printf("[%d] Client #%d is not linked with server\n", pid, 
+                        clntnum);
                 break;
             }
             // Выдать состояние клиента
@@ -98,9 +101,11 @@ int main() {
                 int clntnum;
                 sscanf(buffer, "Get client #%d current state", &clntnum);
                 if ((clntnum < 1) || (clntnum > BACKLOG))
-                    printf("[%d] Invalid ID; ID must be in [1..%d]\n", pid, BACKLOG);
+                    printf("[%d] Invalid ID; ID must be in [1..%d]\n", pid, 
+                        BACKLOG);
                 else if (!clients[clntnum-1])
-                    printf("[%d] Client with id = %d is not linked with server\n", pid, clntnum);
+                    printf("[%d] Client with id = %d is not linked with "
+                           "server\n", pid, clntnum);
                 else {
                     clnt_dest = clnt_base[clntnum-1];
                     clnt_dest_len = sizeof(clnt_dest);
@@ -113,13 +118,16 @@ int main() {
                 int clntnum;
                 sscanf(buffer, "Set client #%d state: ", &clntnum);
                 if ((clntnum < 1) || (clntnum > BACKLOG))
-                    printf("[%d] Invalid ID: ID must be in [1..%d]\n", pid, BACKLOG);
+                    printf("[%d] Invalid ID: ID must be in [1..%d]\n", pid, 
+                        BACKLOG);
                 else if (!clients[clntnum-1])
-                    printf("[%d] Client with id = %d is not linked with server\n", pid, clntnum);
+                    printf("[%d] Client with id = %d is not linked with "
+                           "server\n", pid, clntnum);
                 else {
                     send_state = str2state(buffer, pid);
                     if (send_state == -1)
-                        printf("[%d] Set state to client #%d is terminated\n", pid, clntnum);
+                        printf("[%d] Set state to client #%d is terminated\n", 
+                            pid, clntnum);
                     else {
                         clnt_dest = clnt_base[clntnum-1];
                         clnt_dest_len = sizeof(clnt_dest);
@@ -133,9 +141,11 @@ int main() {
                 int clntnum;
                 sscanf(buffer, "Shutdown client #%d", &clntnum);
                 if ((clntnum < 1) || (clntnum > BACKLOG))
-                    printf("[%d] Invalid ID; ID must be in [1..%d]\n", pid, BACKLOG);
+                    printf("[%d] Invalid ID; ID must be in [1..%d]\n", pid, 
+                        BACKLOG);
                 else if (!clients[clntnum-1])
-                    printf("[%d] Client with id = %d is not linked with server\n", pid, clntnum);
+                    printf("[%d] Client with id = %d is not linked with "
+                           "server\n", pid, clntnum);
                 else {
                     clnt_dest = clnt_base[clntnum-1];
                     clnt_dest_len = sizeof(clnt_dest);
@@ -199,14 +209,17 @@ void *input_thread(void *args) {
                 sscanf(buffer, "Client #%d is launched", &clntnum);
                 clnt_dest = clntaddr;
                 clnt_dest_len = clntlen;
-                // Если клиент с таким id уже подключен, то отклоняем подключение
+                // Если клиент с таким id уже подключен,
+                // то отклоняем подключение
                 if (clients[clntnum-1]) {
                     send_command = OUT_DENY;
                 }
-                // Иначе отсылаем подтверждение об успешном подключении на клиент
+                // Иначе отсылаем подтверждение
+                // об успешном подключении на клиент
                 else {
                     clnt_base[clntnum-1] = clntaddr;
-                    printf("[%d] Client #%d is connected to server\n", pid, clntnum);
+                    printf("[%d] Client #%d is connected to server\n", pid, 
+                        clntnum);
                     clients[clntnum-1] = true;
                     send_command = OUT_CONN;
                 }
@@ -214,7 +227,8 @@ void *input_thread(void *args) {
             // Если клиент высылает свое состояние
             case IN_STATE: {
                 state_t cur_state = OFF;
-                sscanf(buffer, "Client #%d is in state: %d", &clntnum, (int *) &cur_state);
+                sscanf(buffer, "Client #%d is in state: %d", &clntnum, 
+                    (int *) &cur_state);
                 print_client_state(clntnum, pid, cur_state);
                 break;
             }
@@ -222,7 +236,8 @@ void *input_thread(void *args) {
             case IN_SHUTDOWN:
                 sscanf(buffer, "Client #%d is shutdown", &clntnum);
                 if (clients[clntnum-1]) {
-                    memset(&(clnt_base[clntnum-1]), 0, sizeof(clnt_base[clntnum-1]));
+                    memset(&(clnt_base[clntnum-1]), 0, 
+                           sizeof(clnt_base[clntnum-1]));
                     printf("[%d] Client #%d is shutdown\n", pid, clntnum);
                     clients[clntnum-1] = false;
                 }

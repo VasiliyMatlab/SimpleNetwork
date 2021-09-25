@@ -11,14 +11,22 @@ start:
 	@ echo "Start building"
 
 
-server: $(BUILD)/server.o $(BUILD)/network.o $(BUILD)/conditions.o $(BUILD)/internal.o $(BUILD)/parser.o network.h conditions.h internal.h parser.h
-	$(CC) -g -pthread $(BUILD)/server.o $(BUILD)/network.o $(BUILD)/conditions.o $(BUILD)/internal.o $(BUILD)/parser.o -o $(BIN)/server
+server: $(BUILD)/server.o $(BUILD)/network.o $(BUILD)/conditions.o\
+		$(BUILD)/internal.o $(BUILD)/parser.o\
+		network.h conditions.h internal.h parser.h
+	$(CC) -g -pthread $(BUILD)/server.o $(BUILD)/network.o\
+		$(BUILD)/conditions.o $(BUILD)/internal.o $(BUILD)/parser.o\
+		-o $(BIN)/server
 
 $(BUILD)/server.o: server.c network.h conditions.h internal.h
 	$(CC) $(FLAGS) server.c -o $(BUILD)/server.o
 
-client: $(BUILD)/client.o $(BUILD)/network.o $(BUILD)/conditions.o $(BUILD)/internal.o $(BUILD)/parser.o network.h conditions.h internal.h parser.h
-	$(CC) -g -pthread $(BUILD)/client.o $(BUILD)/network.o $(BUILD)/conditions.o $(BUILD)/internal.o $(BUILD)/parser.o -o $(BIN)/client
+client: $(BUILD)/client.o $(BUILD)/network.o $(BUILD)/conditions.o\
+		$(BUILD)/internal.o $(BUILD)/parser.o\
+		network.h conditions.h internal.h parser.h
+	$(CC) -g -pthread $(BUILD)/client.o $(BUILD)/network.o\
+		$(BUILD)/conditions.o $(BUILD)/internal.o $(BUILD)/parser.o\
+		-o $(BIN)/client
 
 $(BUILD)/client.o: client.c network.h conditions.h internal.h
 	$(CC) $(FLAGS) client.c -o $(BUILD)/client.o
