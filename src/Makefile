@@ -9,6 +9,7 @@ all: start server client
 
 start:
 	@ echo "Start building"
+	../scripts/helper.sh
 
 
 server: $(BUILD)/server.o $(BUILD)/network.o $(BUILD)/conditions.o\
