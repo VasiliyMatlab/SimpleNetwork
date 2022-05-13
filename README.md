@@ -81,5 +81,5 @@ ls
 - сделать вывод состояния клиента цветным (RED - разукрасить красным цветом и т.д.)
 
 ***
-<p align="center"><a href="https://github.com/VasiliyMatlab"><img src="figures/profile.jpg" width="100" alt="VasiliyMatlab" /></a></p>
+<p align="center"><a href="https://github.com/VasiliyMatlab"><img src="https://github.com/VasiliyMatlab.png" width="100" alt="VasiliyMatlab" /></a></p>
 <p align="center"><a href="https://github.com/VasiliyMatlab" style="color: #000000">VasiliyMatlab</a></p>
