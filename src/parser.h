@@ -22,7 +22,7 @@ typedef enum {
     OUT_SHUTDOWN = 0x5  // отключить клиента
 } cmd_out;
 
-//
+// Команды серверу
 typedef enum {
     TERM_NONE       = 0x0,  // отсутствие команды
     TERM_LAUNCH     = 0x1,  // проверить наличие клиента
