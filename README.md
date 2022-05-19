@@ -28,7 +28,8 @@
 - GNU Make 4.3 или новее
 
 <h3>Сборка из исходных файлов</h3>
-Открыть командную оболочку (shell) и выполнить указанные команды:  
+Открыть командную оболочку (shell) и выполнить указанные команды:
+
 ```bash
 git clone https://github.com/VasiliyMatlab/SimpleNetwork.git
 cd SimpleNetwork
@@ -43,7 +44,7 @@ ls
 После выполнения указанных действий в списке содержимого папки `bin/` должны появиться файлы `server` и `client`. Если данные файлы в результате выполнения указанных действий, не были созданы - обратитесь к автору данной программы
 
 <h3>Скачивание бинарных файлов</h3>
-Необходимо скачать <a href="https://github.com/VasiliyMatlab/SimpleNetwork/releases/latest/download/Binaries.tar.gz">архив</a> с бинарными файлами из последнего доступного <a href="https://github.com/VasiliyMatlab/SimpleNetwork/releases/latest">релиза</a> себе на диск и выполнить указанные действия:
+Необходимо скачать <a href="https://github.com/VasiliyMatlab/SimpleNetwork/releases/latest/download/Binaries.tar.gz">архив</a> с бинарными файлами (только для x86-64) из последнего доступного <a href="https://github.com/VasiliyMatlab/SimpleNetwork/releases/latest">релиза</a> себе на диск и выполнить указанные действия:
 
 ```bash
 tar -xvf Binaries.tar.gz
